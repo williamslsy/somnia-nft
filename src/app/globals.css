@@ -32,9 +32,9 @@ a {
 
 @layer base {
   :root {
-    --primary: 261 100% 36%;
+    --primary: 225 100% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 233 85% 54%;
+    --secondary: 215 90% 50%;
     --secondary-foreground: 0 0% 100%;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -50,7 +50,7 @@ a {
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 261 100% 36%;
+    --ring: 225 100% 55%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -60,9 +60,9 @@ a {
   }
 
   .dark {
-    --primary: 261 80% 50%;
+    --primary: 225 100% 65%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 233 75% 60%;
+    --secondary: 215 90% 60%;
     --secondary-foreground: 0 0% 100%;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -78,7 +78,7 @@ a {
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 261 80% 50%;
+    --ring: 225 100% 65%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -93,5 +93,19 @@ a {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply rounded-full flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground;
+  }
+
+  .btn-with-arrow {
+    @apply group;
+  }
+
+  .btn-with-arrow svg {
+    @apply group-hover:translate-x-1 transition-transform;
   }
 }

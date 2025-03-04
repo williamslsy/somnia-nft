@@ -50,6 +50,10 @@ module.exports = {
           4: 'hsl(var(--chart-4))',
           5: 'hsl(var(--chart-5))',
         },
+        nft: {
+          purple: '#3d00b7',
+          blue: '#2639ed',
+        },
       },
     },
   },

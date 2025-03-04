@@ -2,6 +2,7 @@
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Search } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export function Header() {
@@ -9,7 +10,7 @@ export function Header() {
     <header className="w-full bg-background">
       <div className="container mx-auto flex items-center justify-between py-4 px-4">
         <Link href="/" className="text-primary text-2xl font-bold">
-          somnia
+          <Image src="/assets/somnialogo.svg" alt="logo" width={100} height={100} />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

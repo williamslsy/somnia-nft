@@ -1,5 +1,6 @@
+'use client';
+
 import Image from 'next/image';
-import { Button } from '../ui/button';
 
 export function NFTCard() {
   return (
@@ -23,7 +24,6 @@ export function NFTCard() {
           </div>
           <span className="text-sm font-medium">0.1111 STT</span>
         </div>
-        <Button className="w-full rounded-full py-6 h-auto text-base font-semibold shadow-sm hover:shadow-md transition-all">Mint for 0.1111 STT</Button>
       </div>
     </div>
   );

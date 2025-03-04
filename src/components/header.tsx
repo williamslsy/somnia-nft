@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 
@@ -32,10 +32,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button className="rounded-full font-bold px-10 py-4 h-[50px]">Upload</Button>
-          <Button variant="outline" className="rounded-full border-primary text-primary font-bold px-5 py-4 h-[50px]">
-            Connect Wallet
-          </Button>
+          <ConnectButton />
         </div>
       </div>
       <div className="border-b border-border w-full"></div>

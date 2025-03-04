@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Marketplace | Somnia',
+  title: 'Devnet Mint | Somnia',
   description: 'Discover, collect, and sell extraordinary NFTs on the Somnia marketplace',
 };
 
-export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
+export default function MintPageLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

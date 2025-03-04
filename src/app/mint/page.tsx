@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 
-export default function MarketplacePage() {
+export default function MintPage() {
   return (
     <main className="flex flex-col min-h-screen">
       <section className="w-full bg-gradient-to-b from-background to-[#1967FF]/5 py-20">

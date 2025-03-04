@@ -13,8 +13,8 @@ export function Header() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/marketplace" className="text-foreground text-base font-medium hover:text-primary transition-colors">
-            Marketplace
+          <Link href="/mint" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+            Mint
           </Link>
           <Link href="/resource" className="text-foreground text-base font-medium hover:text-primary transition-colors">
             Resource

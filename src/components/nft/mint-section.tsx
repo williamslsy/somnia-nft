@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 
 function MintSection() {
   const { isConnected } = useAccount();
+
   return (
     <section className="w-full py-16 bg-gradient-to-b from-background to-[#1967FF]/5">
       <div className="container mx-auto px-4">

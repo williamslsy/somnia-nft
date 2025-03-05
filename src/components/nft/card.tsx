@@ -2,7 +2,11 @@
 
 import Image from 'next/image';
 
-export function NFTCard() {
+interface NFTCardProps {
+  tokenId?: bigint;
+}
+
+export function NFTCard({ tokenId }: NFTCardProps) {
   return (
     <div className="bg-background border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group">
       <div className="relative aspect-square overflow-hidden">
@@ -13,7 +17,7 @@ export function NFTCard() {
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">Devnet OG Somniac</h3>
-          <span className="text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">#1</span>
+          <span className="text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">{tokenId ? `#${tokenId.toString()}` : '#-'}</span>
         </div>
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">

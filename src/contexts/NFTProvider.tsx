@@ -15,6 +15,8 @@ interface NFTContextType {
   setIsConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
   mintNativeToken: (amount: number) => Promise<void>;
   getNFTsOwned: (userAddress: `0x${string}`) => Promise<bigint[]>;
+  registerSuccessCallback: (callback: () => void) => void;
+  unregisterSuccessCallback: () => void;
 }
 
 const NFT_PRICE = '0.1111' as const;
@@ -24,6 +26,7 @@ export const NFTContext = createContext<NFTContextType | undefined>(undefined);
 export const NFTProvider = ({ children }: { children: ReactNode }) => {
   const [isMinting, setIsMinting] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [successCallback, setSuccessCallback] = useState<(() => void) | null>(null);
 
   const { address } = useAccount();
 
@@ -35,6 +38,14 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
       enabled: !!hash,
     },
   });
+
+  const registerSuccessCallback = useCallback((callback: () => void) => {
+    setSuccessCallback(() => callback);
+  }, []);
+
+  const unregisterSuccessCallback = useCallback(() => {
+    setSuccessCallback(null);
+  }, []);
 
   const getNFTsOwned = useCallback(async (userAddress: `0x${string}`) => {
     try {
@@ -70,7 +81,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
           throw new Error('Invalid amount specified');
         }
 
-        const valueToSend = parseEther(NFT_PRICE);
+        const valueToSend = parseEther(NFT_PRICE) * BigInt(tokenAmount);
 
         writeContract({
           ...contractConfig,
@@ -125,8 +136,13 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
       });
       setIsMinting(false);
       setIsConfirmed(true);
+
+      // Execute the success callback if registered
+      if (successCallback) {
+        successCallback();
+      }
     }
-  }, [hash, isConfirming, isSuccess, error]);
+  }, [hash, isConfirming, isSuccess, error, successCallback]);
 
   const contextValue: NFTContextType = {
     isPending,
@@ -135,6 +151,8 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     setIsConfirmed,
     mintNativeToken,
     getNFTsOwned,
+    registerSuccessCallback,
+    unregisterSuccessCallback,
   };
 
   return <NFTContext.Provider value={contextValue}>{children}</NFTContext.Provider>;

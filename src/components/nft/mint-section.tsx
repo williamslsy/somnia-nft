@@ -1,15 +1,23 @@
 'use client';
 import Image from 'next/image';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from '../ui/button';
-
 import { NFTCard } from './card';
-import { useNFTMint } from '@/hooks/useNFTMint';
+import { useNFT } from '@/hooks/useNFT';
+import { Loader2 } from 'lucide-react';
+import { useNFTContext } from '@/contexts/NFTProvider';
 
 function MintSection() {
-  const { address, isConnected } = useAccount();
-  const { ownedNFTs, mintAmount, isMinting, handleMint, handleIncrementMint, handleDecrementMint, mintPrice } = useNFTMint({ address, isConnected });
+  const { isConnected } = useAccount();
+  const { isMinting } = useNFTContext();
+  const { mintAmount, mintNativeToken, handleIncrementMint, handleDecrementMint, mintPrice, ownedNFTs, nftMetadata, isLoading, fetchTokenMetadata, showcaseMetadata } = useNFT();
+
+  const handleMint = useCallback(() => {
+    if (isConnected) {
+      mintNativeToken(mintAmount);
+    }
+  }, [isConnected, mintNativeToken, mintAmount]);
 
   return (
     <section className="w-full py-16 bg-gradient-to-b from-background to-primary/5">
@@ -18,7 +26,13 @@ function MintSection() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 lg:gap-16">
             <div className="w-full md:w-2/5 flex-shrink-0">
               <div className="rounded-[24px] bg-primary/5 aspect-square flex items-center justify-center overflow-hidden">
-                <Image src="/assets/placeholder.svg" alt="Somnia Mascot Pixel Art" width={400} height={400} className="object-contain w-4/5 h-4/5" />
+                {isLoading ? (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <Image src={showcaseMetadata.image} alt={showcaseMetadata.name || 'Somnia Mascot Pixel Art'} width={400} height={400} className="object-contain w-4/5 h-4/5" />
+                )}
               </div>
             </div>
 
@@ -62,7 +76,7 @@ function MintSection() {
                 </div>
 
                 <Button disabled={!isConnected || isMinting} onClick={handleMint} className="btn-primary w-full py-2 h-auto text-base font-semibold shadow-sm hover:shadow-md transition-all">
-                  {isMinting ? 'Minting...' : isConnected ? `Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT` : 'Connect Wallet to Mint'}
+                  {isMinting ? <>Minting...</> : isConnected ? `Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT` : 'Connect Wallet to Mint'}
                 </Button>
               </div>
 
@@ -77,7 +91,16 @@ function MintSection() {
           <h3 className="text-2xl font-bold mb-6">Your Owned NFTs</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {ownedNFTs.map((tokenId) => (
-              <NFTCard key={tokenId.toString()} tokenId={tokenId} />
+              <NFTCard
+                key={tokenId.toString()}
+                tokenId={tokenId}
+                metadata={nftMetadata[Number(tokenId)]}
+                onLoad={() => {
+                  if (!nftMetadata[Number(tokenId)]) {
+                    fetchTokenMetadata(Number(tokenId));
+                  }
+                }}
+              />
             ))}
           </div>
         </div>

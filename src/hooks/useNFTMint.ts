@@ -33,7 +33,7 @@ export function useNFTMint({ address, isConnected }: UseNFTMintProps) {
   };
 
   const handleIncrementMint = () => {
-    // Add max mint limit logic if needed
+    // TODO: Add max mint limit logic and disable button when max limit is reached
     setMintAmount((prev) => prev + 1);
   };
 

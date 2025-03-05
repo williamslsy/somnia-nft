@@ -1,47 +1,15 @@
 'use client';
 import Image from 'next/image';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from '../ui/button';
 
 import { NFTCard } from './card';
-import { useNFTContext } from '@/contexts/NFTProvider';
+import { useNFTMint } from '@/hooks/useNFTMint';
 
 function MintSection() {
   const { address, isConnected } = useAccount();
-  const { mintNativeToken, getNFTsOwned, isMinting } = useNFTContext();
-  const [ownedNFTs, setOwnedNFTs] = useState<bigint[]>([]);
-  const [mintAmount, setMintAmount] = useState(1);
-
-  useEffect(() => {
-    const fetchOwnedNFTs = async () => {
-      if (isConnected && address) {
-        try {
-          const nfts = await getNFTsOwned(address);
-          setOwnedNFTs(nfts);
-        } catch (error) {
-          console.error('Failed to fetch owned NFTs', error);
-        }
-      }
-    };
-
-    fetchOwnedNFTs();
-  }, [isConnected, address, getNFTsOwned]);
-
-  const handleMint = () => {
-    if (isConnected) {
-      mintNativeToken(mintAmount);
-    }
-  };
-
-  const handleIncrementMint = () => {
-    // Add max mint limit logic if needed
-    setMintAmount((prev) => prev + 1);
-  };
-
-  const handleDecrementMint = () => {
-    setMintAmount((prev) => Math.max(1, prev - 1));
-  };
+  const { ownedNFTs, mintAmount, isMinting, handleMint, handleIncrementMint, handleDecrementMint, mintPrice } = useNFTMint({ address, isConnected });
 
   return (
     <section className="w-full py-16 bg-gradient-to-b from-background to-primary/5">
@@ -94,7 +62,7 @@ function MintSection() {
                 </div>
 
                 <Button disabled={!isConnected || isMinting} onClick={handleMint} className="btn-primary w-full py-2 h-auto text-base font-semibold shadow-sm hover:shadow-md transition-all">
-                  {isMinting ? 'Minting...' : isConnected ? `Mint ${mintAmount} for ${(0.1111 * mintAmount).toFixed(4)} STT` : 'Connect Wallet to Mint'}
+                  {isMinting ? 'Minting...' : isConnected ? `Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT` : 'Connect Wallet to Mint'}
                 </Button>
               </div>
 

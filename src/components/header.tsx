@@ -2,26 +2,26 @@
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Search } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
+import { Logo } from '@/components/ui/logo';
 
 export function Header() {
   return (
     <header className="w-full bg-background">
       <div className="container mx-auto flex items-center justify-between py-4 px-4">
         <Link href="/" className="text-primary text-2xl font-bold">
-          <Image src="/assets/somnialogo.svg" alt="logo" width={100} height={100} />
+          <Logo width={100} height={100} />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
+          <Link href="/" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+            Home
+          </Link>
           <Link href="/mint" className="text-foreground text-base font-medium hover:text-primary transition-colors">
             Mint
           </Link>
-          <Link href="/resource" className="text-foreground text-base font-medium hover:text-primary transition-colors">
-            Resource
-          </Link>
-          <Link href="/about" className="text-foreground text-base font-medium hover:text-primary transition-colors">
-            About
+          <Link href="/gallery" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+            Gallery
           </Link>
         </div>
 

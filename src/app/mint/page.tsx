@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import MintSection from '@/components/nft/mint-section';
-import { ERC20Minter } from '@/components/nft/erc20-minter';
 import NFTGallery from '@/components/nft/nft-gallery';
 
 export default function MintPage() {
@@ -24,16 +23,6 @@ export default function MintPage() {
       </section>
 
       <MintSection paymentMethod={paymentMethod} onPaymentMethodChange={handlePaymentMethodChange} />
-
-      {paymentMethod === 'erc20' && (
-        <section className="w-full py-8 bg-gradient-to-b from-primary/5 to-background">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
-              <ERC20Minter />
-            </div>
-          </div>
-        </section>
-      )}
 
       <NFTGallery />
     </main>

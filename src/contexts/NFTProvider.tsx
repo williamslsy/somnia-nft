@@ -70,7 +70,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         args: [address, contractConfig.address],
       })) as bigint;
 
-      // Assuming price is 0.1111 tokens, check if approval is enough for at least 1 token
       const minimumApproval = parseEther('0.1111');
       const hasApproval = allowance >= minimumApproval;
       setHasERC20Approval(hasApproval);
@@ -81,7 +80,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [address]);
 
-  // Fetch ERC20 balance
   const fetchERC20Balance = useCallback(async (): Promise<void> => {
     if (!address) {
       setERC20Balance(BigInt(0));
@@ -102,7 +100,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [address]);
 
-  // Private function to get the current balance (without updating state)
   const getCurrentERC20Balance = useCallback(async (): Promise<bigint> => {
     if (!address) return BigInt(0);
 
@@ -127,7 +124,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
       setIsApprovingERC20(true);
       setIsAwaitingApproval(true);
 
-      // Approve a large amount to avoid frequent approvals
       const approvalAmount = parseEther('100');
 
       writeContract({
@@ -156,7 +152,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [address, writeContract]);
 
-  // Private function to do the actual minting with ERC20
   const executeERC20Mint = useCallback(
     async (amount: number) => {
       if (!address) {
@@ -170,6 +165,33 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
         if (isNaN(tokenAmount) || tokenAmount <= 0) {
           throw new Error('Invalid amount specified');
+        }
+
+        try {
+          const estimatedGas = await publicClient.estimateContractGas({
+            ...contractConfig,
+            functionName: 'mintNative',
+            args: [tokenAmount],
+            account: address,
+          });
+
+          const gasLimit = (estimatedGas * BigInt(130)) / BigInt(100);
+
+          writeContract({
+            ...contractConfig,
+            functionName: 'mintWithERC20',
+            args: [tokenAmount],
+            gas: gasLimit,
+          });
+        } catch (estimationError) {
+          console.warn('Gas estimation failed, using fallback gas limit:', estimationError);
+
+          writeContract({
+            ...contractConfig,
+            functionName: 'mintWithERC20',
+            args: [tokenAmount],
+            gas: BigInt(100000),
+          });
         }
 
         writeContract({
@@ -196,14 +218,12 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     [address, writeContract]
   );
 
-  // Public function that combines approval and minting as needed
   const mintWithERC20 = useCallback(
     async (amount: number): Promise<void> => {
       if (!address) {
         throw new Error('Wallet not connected');
       }
 
-      // First check if we have enough balance
       const balance = await getCurrentERC20Balance();
       const requiredAmount = parseEther(NFT_PRICE) * BigInt(amount);
 
@@ -216,24 +236,18 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Then check if we need approval first
       const hasApproval = await checkERC20Approval();
 
       if (!hasApproval) {
-        // Store the mint amount for after approval completes
         setPendingMintAmount(amount);
-        // Start the approval process
         await approveERC20();
-        // The rest happens in the useEffect that watches for transaction success
       } else {
-        // Already approved, go straight to minting
         await executeERC20Mint(amount);
       }
     },
     [address, getCurrentERC20Balance, checkERC20Approval, approveERC20, executeERC20Mint]
   );
 
-  // Effect for checking ERC20 approval and balance
   useEffect(() => {
     if (address) {
       checkERC20Approval();
@@ -277,12 +291,35 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
         const valueToSend = parseEther(NFT_PRICE) * BigInt(tokenAmount);
 
-        writeContract({
-          ...contractConfig,
-          functionName: 'mintNative',
-          args: [tokenAmount],
-          value: valueToSend,
-        });
+        try {
+          const estimatedGas = await publicClient.estimateContractGas({
+            ...contractConfig,
+            functionName: 'mintNative',
+            args: [tokenAmount],
+            value: valueToSend,
+            account: address,
+          });
+
+          const gasLimit = (estimatedGas * BigInt(130)) / BigInt(100);
+
+          writeContract({
+            ...contractConfig,
+            functionName: 'mintNative',
+            args: [tokenAmount],
+            value: valueToSend,
+            gas: gasLimit,
+          });
+        } catch (estimationError) {
+          console.warn('Gas estimation failed, using fallback gas limit:', estimationError);
+
+          writeContract({
+            ...contractConfig,
+            functionName: 'mintNative',
+            args: [tokenAmount],
+            value: valueToSend,
+            gas: BigInt(100000),
+          });
+        }
 
         toast({
           title: 'Confirm Transaction',
@@ -301,7 +338,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     },
     [address, writeContract]
   );
-
   useEffect(() => {
     if (error) {
       toast({
@@ -333,7 +369,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
     if (isSuccess) {
       if (isAwaitingApproval) {
-        // Approval transaction was successful
         setIsApprovingERC20(false);
         setIsAwaitingApproval(false);
         setHasERC20Approval(true);
@@ -344,16 +379,13 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
           variant: 'success',
         });
 
-        // If we have a pending mint, continue with it
         if (pendingMintAmount !== null) {
-          // Use a timeout to allow UI to update and avoid nonce issues
           setTimeout(() => {
             executeERC20Mint(pendingMintAmount);
             setPendingMintAmount(null);
           }, 1500);
         }
       } else {
-        // Minting transaction was successful
         toast({
           title: 'Success',
           description: 'Transaction confirmed: Your NFT has been minted',
@@ -362,12 +394,10 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         setIsMinting(false);
         setIsConfirmed(true);
 
-        // Execute the success callback if registered
         if (successCallback) {
           successCallback();
         }
 
-        // Refresh IKOIN balance after mint
         fetchERC20Balance();
       }
     }

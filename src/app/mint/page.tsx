@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import MintSection from '@/components/nft/mint-section';
 import { ERC20Minter } from '@/components/nft/erc20-minter';
+import NFTGallery from '@/components/nft/nft-gallery';
 
 export default function MintPage() {
   const [paymentMethod, setPaymentMethod] = useState<'native' | 'erc20'>('native');
@@ -33,6 +34,8 @@ export default function MintPage() {
           </div>
         </section>
       )}
+
+      <NFTGallery />
     </main>
   );
 }

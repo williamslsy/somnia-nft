@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import MintSection from '@/components/nft/mint-section';
-import NFTGallery from '@/components/nft/nft-gallery';
 
 export default function MintPage() {
   const [paymentMethod, setPaymentMethod] = useState<'native' | 'erc20'>('native');
@@ -23,8 +22,6 @@ export default function MintPage() {
       </section>
 
       <MintSection paymentMethod={paymentMethod} onPaymentMethodChange={handlePaymentMethodChange} />
-
-      <NFTGallery />
     </main>
   );
 }

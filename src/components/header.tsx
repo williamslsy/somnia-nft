@@ -46,7 +46,20 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <ConnectButton />
+          <ConnectButton
+            chainStatus={{
+              smallScreen: 'none',
+              largeScreen: 'full',
+            }}
+            accountStatus={{
+              smallScreen: 'avatar',
+              largeScreen: 'full',
+            }}
+            showBalance={{
+              smallScreen: true,
+              largeScreen: true,
+            }}
+          />
 
           <button className="md:hidden z-20" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

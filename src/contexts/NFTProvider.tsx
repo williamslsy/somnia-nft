@@ -23,6 +23,7 @@ interface NFTContextType {
   mintWithERC20: (amount: number) => Promise<void>;
   fetchERC20Balance: () => Promise<void>;
   isApprovingERC20: boolean;
+  approveERC20: () => Promise<boolean>;
 }
 
 const NFT_PRICE = '0.1111' as const;
@@ -385,6 +386,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     hasERC20Approval,
     erc20Balance,
     mintWithERC20,
+    approveERC20,
     fetchERC20Balance,
     isApprovingERC20,
   };

@@ -21,6 +21,7 @@ export function useNFT() {
   } = useNFTContext();
 
   // Mint-related state
+  const [isImageLoading, setIsImageLoading] = useState(true);
   const [mintAmount, setMintAmount] = useState(1);
   const [ownedNFTs, setOwnedNFTs] = useState<bigint[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'native' | 'erc20'>('native');
@@ -191,6 +192,23 @@ export function useNFT() {
     }
   }, [ownedNFTs, nextNftId, mintAmount, fetchAllOwnedNFTsMetadata, fetchTokenMetadata]);
 
+  // Load the showcase image only once when the component mounts
+  useEffect(() => {
+    const loadShowcaseImage = async () => {
+      setIsImageLoading(true);
+      try {
+        // Load your showcase metadata here
+        // ...
+      } catch (error) {
+        console.error('Failed to load showcase image:', error);
+      } finally {
+        setIsImageLoading(false);
+      }
+    };
+
+    loadShowcaseImage();
+  }, []); // Empty dependency array means this runs once on mount
+
   // Calculate the showcase metadata
   const showcaseMetadata = useMemo(() => {
     // If we have metadata for the next NFT, use it
@@ -216,17 +234,18 @@ export function useNFT() {
 
   // Wrapper for mintNativeToken that doesn't need to call refetchOwnedNFTs
   // since it will be called via the success callback
-  const handleMint = useCallback(
-    (amount: number) => {
-      return mintNativeToken(amount);
-    },
-    [mintNativeToken]
-  );
+  // const handleMint = useCallback(
+  //   (amount: number) => {
+  //     return mintNativeToken(amount);
+  //   },
+  //   [mintNativeToken]
+  // );
 
   return {
     // Minting-related returns
     mintAmount,
-    mintNativeToken: handleMint,
+    setMintAmount,
+    mintNativeToken,
     handleIncrementMint,
     handleDecrementMint,
     mintPrice: 0.1111 * mintAmount,
@@ -235,6 +254,7 @@ export function useNFT() {
     ownedNFTs,
     nftMetadata,
     baseURI,
+    isImageLoading,
     isLoading,
     error,
     nextNftId,

@@ -3,21 +3,50 @@ import Image from 'next/image';
 import React, { useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from '../ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { NFTCard } from './card';
 import { useNFT } from '@/hooks/useNFT';
 import { Loader2 } from 'lucide-react';
 import { useNFTContext } from '@/contexts/NFTProvider';
 
-function MintSection() {
-  const { isConnected } = useAccount();
-  const { isMinting } = useNFTContext();
-  const { mintAmount, mintNativeToken, handleIncrementMint, handleDecrementMint, mintPrice, ownedNFTs, nftMetadata, isLoading, fetchTokenMetadata, showcaseMetadata } = useNFT();
+interface MintSectionProps {
+  paymentMethod: 'native' | 'erc20';
+  onPaymentMethodChange: (method: 'native' | 'erc20') => void;
+}
 
-  const handleMint = useCallback(() => {
-    if (isConnected) {
-      mintNativeToken(mintAmount);
+function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps) {
+  const { isConnected } = useAccount();
+  const { isMinting, isApprovingERC20 } = useNFTContext();
+
+  const {
+    mintAmount,
+    mintNativeToken,
+    handleIncrementMint,
+    handleDecrementMint,
+    mintPrice,
+    ownedNFTs,
+    nftMetadata,
+    isLoading,
+    fetchTokenMetadata,
+    showcaseMetadata,
+    hasERC20Approval,
+    approveERC20,
+    erc20Balance,
+    hasEnoughERC20,
+    mintWithERC20,
+  } = useNFT();
+
+  const handlePaymentMethodChange = (value: string) => {
+    onPaymentMethodChange(value as 'native' | 'erc20');
+  };
+
+  const handleMint = useCallback(async () => {
+    if (paymentMethod === 'native') {
+      return mintNativeToken(mintAmount);
+    } else {
+      return mintWithERC20(mintAmount);
     }
-  }, [isConnected, mintNativeToken, mintAmount]);
+  }, [paymentMethod, mintNativeToken, mintAmount, mintWithERC20]);
 
   return (
     <section className="w-full py-16 bg-gradient-to-b from-background to-primary/5">
@@ -37,14 +66,18 @@ function MintSection() {
             </div>
 
             <div className="flex flex-col items-start mb-16">
-              <div className="inline-flex items-center gap-2 text-primary text-sm font-medium bg-primary/10 px-4 py-1.5 rounded-full mb-5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-                Minting Now
+              <div className="flex gap-4">
+                <div className="inline-flex items-center gap-2 text-primary text-sm font-medium bg-primary/10 px-4 py-1.5 rounded-full mb-5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  </span>
+                  Minting Now
+                </div>
+                <div className=" items-center gap-2 text-primary text-sm font-medium bg-primary/10 px-4 py-1.5 w-full rounded-full mb-5">
+                  {isConnected && <div className="mt-6 text-muted-foreground">{ownedNFTs.length} NFTs minted</div>}
+                </div>
               </div>
-
               <h2 className="text-3xl md:text-4xl font-bold mb-2">Somnia Devnet NFT</h2>
 
               <div className="flex items-center gap-2 mb-6">
@@ -64,6 +97,42 @@ function MintSection() {
                 on Somnia Quest.
               </p>
 
+              <Tabs defaultValue={paymentMethod} className="w-full mb-6" onValueChange={handlePaymentMethodChange} value={paymentMethod}>
+                <TabsList className="grid w-full grid-cols-2 mb-2">
+                  <TabsTrigger value="native">Pay with STT</TabsTrigger>
+                  <TabsTrigger value="erc20">Pay with IKOIN</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="native" className="mt-2">
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-sm mb-2 text-muted-foreground">Pay with native STT tokens</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Price:</span>
+                      <span className="font-semibold">{mintPrice.toFixed(4)} STT</span>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="erc20" className="mt-2">
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-sm mb-2 text-muted-foreground">Pay with IKOIN ERC20 tokens</p>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Price:</span>
+                      <span className="font-semibold">{mintPrice.toFixed(4)} IKOIN</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Your Balance:</span>
+                      <span className={`font-semibold ${!hasEnoughERC20 && 'text-destructive'}`}>{erc20Balance} IKOIN</span>
+                    </div>
+                    {!hasEnoughERC20 && <div className="text-xs text-destructive mt-1">Insufficient balance. Get IKOIN by calling the mint function.</div>}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Approval:</span>
+                      <span className={`font-semibold ${!hasERC20Approval && 'text-amber-500'}`}>{hasERC20Approval ? 'Approved ✓' : 'Required ⚠️'}</span>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6">
                 <div className="flex items-center gap-3">
                   <Button variant="outline" size="icon" onClick={handleDecrementMint} disabled={!isConnected || mintAmount <= 1}>
@@ -75,9 +144,32 @@ function MintSection() {
                   </Button>
                 </div>
 
-                <Button disabled={!isConnected || isMinting} onClick={handleMint} className="btn-primary w-full py-2 h-auto text-base font-semibold shadow-sm hover:shadow-md transition-all">
-                  {isMinting ? <>Minting...</> : isConnected ? `Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT` : 'Connect Wallet to Mint'}
-                </Button>
+                {paymentMethod === 'native' ? (
+                  <Button disabled={!isConnected || isMinting} onClick={handleMint} className="btn-primary w-full py-2 h-auto text-base font-semibold shadow-sm hover:shadow-md transition-all">
+                    {isMinting ? <>Minting...</> : isConnected ? `Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT` : 'Connect Wallet to Mint'}
+                  </Button>
+                ) : (
+                  <>
+                    {!hasERC20Approval ? (
+                      <Button
+                        disabled={!isConnected || isApprovingERC20}
+                        onClick={approveERC20}
+                        variant="outline"
+                        className="w-full py-2 h-auto text-base font-semibold shadow-sm hover:shadow-md transition-all"
+                      >
+                        {isApprovingERC20 ? 'Approving...' : 'Approve IKOIN'}
+                      </Button>
+                    ) : (
+                      <Button
+                        disabled={!isConnected || isMinting || !hasEnoughERC20}
+                        onClick={handleMint}
+                        className="btn-primary w-full py-2 h-auto text-base font-semibold shadow-sm hover:shadow-md transition-all"
+                      >
+                        {isMinting ? 'Minting...' : `Mint ${mintAmount} for ${mintPrice.toFixed(4)} IKOIN`}
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
 
               {isConnected && <div className="mt-6 text-muted-foreground">{ownedNFTs.length} NFTs minted</div>}

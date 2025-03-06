@@ -3,20 +3,49 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { getNFTMetadata, getTokenBaseURI, NFTMetadata } from '@/lib/metadata';
 import { useNFTContext } from '@/contexts/NFTProvider';
+import { formatEther } from 'viem';
 
 export function useNFT() {
   const { address, isConnected } = useAccount();
-  const { mintNativeToken, getNFTsOwned, registerSuccessCallback, unregisterSuccessCallback } = useNFTContext();
+  const {
+    mintNativeToken,
+    getNFTsOwned,
+    registerSuccessCallback,
+    unregisterSuccessCallback,
+
+    hasERC20Approval,
+    erc20Balance,
+    approveERC20,
+    mintWithERC20,
+    isApprovingERC20,
+  } = useNFTContext();
 
   // Mint-related state
   const [mintAmount, setMintAmount] = useState(1);
   const [ownedNFTs, setOwnedNFTs] = useState<bigint[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<'native' | 'erc20'>('native');
 
   // Metadata-related state
   const [nftMetadata, setNFTMetadata] = useState<Record<string, NFTMetadata>>({});
   const [baseURI, setBaseURI] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Format ERC20 balance for display
+  const formattedERC20Balance = useMemo(() => {
+    return Number(formatEther(erc20Balance)).toFixed(4);
+  }, [erc20Balance]);
+
+  // Calculate if user has enough ERC20 tokens
+  const hasEnoughERC20 = useMemo(() => {
+    const requiredAmount = 0.1111 * mintAmount;
+    return Number(formatEther(erc20Balance)) >= requiredAmount;
+  }, [erc20Balance, mintAmount]);
+
+  // Toggle payment method
+  const togglePaymentMethod = useCallback(() => {
+    setPaymentMethod((prev) => (prev === 'native' ? 'erc20' : 'native'));
+  }, []);
 
   // Fetch base URI
   const fetchBaseURI = useCallback(async () => {
@@ -214,5 +243,14 @@ export function useNFT() {
     // Utility methods
     fetchTokenMetadata,
     refetchOwnedNFTs: fetchOwnedNFTs,
+
+    paymentMethod,
+    togglePaymentMethod,
+    hasERC20Approval,
+    approveERC20,
+    erc20Balance: formattedERC20Balance,
+    hasEnoughERC20,
+    isApprovingERC20,
+    mintWithERC20,
   };
 }

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { NFTMetadata } from '@/lib/metadata';
+import { Logo } from '../ui/logo';
 
 interface NFTCardProps {
   tokenId?: bigint;
@@ -43,12 +44,9 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
           <h3 className="text-lg font-bold">{metadata?.name || 'Devnet OG Somniac'}</h3>
           <span className="text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">#{tokenId ? tokenId.toString() : '0'}</span>
         </div>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-xs text-primary font-bold">S</span>
-            </div>
-            <span className="text-sm text-muted-foreground">Somnia</span>
+            <Logo width={60} height={60} />
           </div>
           <span className="text-sm font-medium">0.1111 STT</span>
         </div>

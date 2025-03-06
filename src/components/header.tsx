@@ -3,9 +3,20 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/ui/logo';
 
 export function Header() {
+  const pathname = usePathname();
+
+  const isActive = (path: string) => {
+    return pathname === path;
+  };
+
+  const getLinkClass = (path: string) => {
+    return `text-base font-medium transition-colors ${isActive(path) ? 'text-primary font-semibold' : 'text-foreground hover:text-primary'}`;
+  };
+
   return (
     <header className="w-full bg-background">
       <div className="container mx-auto flex items-center justify-between py-4 px-4">
@@ -14,13 +25,13 @@ export function Header() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+          <Link href="/" className={getLinkClass('/')}>
             Home
           </Link>
-          <Link href="/mint" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+          <Link href="/mint" className={getLinkClass('/mint')}>
             Mint
           </Link>
-          <Link href="/gallery" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+          <Link href="/gallery" className={getLinkClass('/gallery')}>
             Gallery
           </Link>
         </div>

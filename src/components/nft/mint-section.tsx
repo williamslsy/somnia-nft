@@ -4,7 +4,6 @@ import React, { useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { NFTCard } from './card';
 import { useNFT } from '@/hooks/useNFT';
 import { Loader2 } from 'lucide-react';
 import { useNFTContext } from '@/contexts/NFTProvider';
@@ -25,9 +24,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     handleDecrementMint,
     mintPrice,
     ownedNFTs,
-    nftMetadata,
     isLoading,
-    fetchTokenMetadata,
     showcaseMetadata,
     hasERC20Approval,
     approveERC20,
@@ -74,9 +71,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                   </span>
                   Minting Now
                 </div>
-                <div className=" items-center gap-2 text-primary text-sm font-medium bg-primary/10 px-4 py-1.5 w-full rounded-full mb-5">
-                  {isConnected && <div className="mt-6 text-muted-foreground">{ownedNFTs.length} NFTs minted</div>}
-                </div>
+                <div className="flex items-center gap-2 text-primary text-sm font-medium bg-primary/10 px-4 py-1.5 rounded-full mb-5">{isConnected && <span>{ownedNFTs.length} NFTs minted</span>}</div>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-2">Somnia Devnet NFT</h2>
 
@@ -171,32 +166,10 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                   </>
                 )}
               </div>
-
-              {isConnected && <div className="mt-6 text-muted-foreground">{ownedNFTs.length} NFTs minted</div>}
             </div>
           </div>
         </div>
       </div>
-
-      {isConnected && ownedNFTs.length > 0 && (
-        <div className="container mx-auto px-4 mt-12">
-          <h3 className="text-2xl font-bold mb-6">Your Owned NFTs</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {ownedNFTs.map((tokenId) => (
-              <NFTCard
-                key={tokenId.toString()}
-                tokenId={tokenId}
-                metadata={nftMetadata[Number(tokenId)]}
-                onLoad={() => {
-                  if (!nftMetadata[Number(tokenId)]) {
-                    fetchTokenMetadata(Number(tokenId));
-                  }
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

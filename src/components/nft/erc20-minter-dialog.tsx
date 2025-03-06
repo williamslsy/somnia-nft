@@ -4,13 +4,18 @@ import { useWriteContract } from 'wagmi';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { toast } from '@/components/ui/use-toast';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { useNFTContext } from '@/contexts/NFTProvider';
 import { erc20ContractConfig } from '@/lib/config';
 
-export function ERC20Minter() {
+interface ERC20MinterProps {
+  trigger?: React.ReactNode; // Custom trigger element
+}
+
+export function ERC20MinterDialog({ trigger }: ERC20MinterProps) {
   const [amount, setAmount] = useState<string>('10');
   const [isMinting, setIsMinting] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { fetchERC20Balance } = useNFTContext();
   const { writeContract } = useWriteContract();
@@ -42,8 +47,9 @@ export function ERC20Minter() {
         variant: 'default',
       });
 
-      // Reset form after successful mint
+      // Reset form and close dialog after successful mint
       setAmount('10');
+      setOpen(false);
 
       // Refresh the balance after a delay to allow transaction to process
       setTimeout(() => {
@@ -62,22 +68,31 @@ export function ERC20Minter() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Get IKOIN Tokens</CardTitle>
-        <CardDescription>Mint IKOIN tokens to use for NFT purchases</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-4">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="outline" size="sm" className="text-sm font-medium">
+            Mint IKOIN
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Get IKOIN Tokens</DialogTitle>
+          <DialogDescription>Mint IKOIN tokens to use for NFT purchases</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
           <div className="flex items-center gap-3">
             <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="1" className="w-full" placeholder="Amount of IKOIN to mint" />
-            <Button onClick={handleMint} disabled={isMinting} className="whitespace-nowrap">
-              {isMinting ? 'Minting...' : 'Mint IKOIN'}
-            </Button>
           </div>
+          <p className="text-sm text-muted-foreground">You need IKOIN tokens to mint NFTs using the ERC20 payment method.</p>
         </div>
-      </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">You need IKOIN tokens to mint NFTs using the ERC20 payment method.</CardFooter>
-    </Card>
+        <DialogFooter>
+          <Button onClick={handleMint} disabled={isMinting} className="w-full">
+            {isMinting ? 'Minting...' : 'Mint IKOIN'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

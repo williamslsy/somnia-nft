@@ -1,26 +1,39 @@
 'use client';
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Search } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/ui/logo';
+import { useState } from 'react';
 
 export function Header() {
+  const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isActive = (path: string) => {
+    return pathname === path;
+  };
+
+  const getLinkClass = (path: string) => {
+    return `text-base font-medium transition-colors ${isActive(path) ? 'text-primary font-semibold' : 'text-foreground hover:text-primary'}`;
+  };
+
   return (
     <header className="w-full bg-background">
       <div className="container mx-auto flex items-center justify-between py-4 px-4">
-        <Link href="/" className="text-primary text-2xl font-bold">
+        <Link href="/" className="text-primary text-2xl font-bold z-20">
           <Logo width={100} height={100} />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+          <Link href="/" className={getLinkClass('/')}>
             Home
           </Link>
-          <Link href="/mint" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+          <Link href="/mint" className={getLinkClass('/mint')}>
             Mint
           </Link>
-          <Link href="/gallery" className="text-foreground text-base font-medium hover:text-primary transition-colors">
+          <Link href="/gallery" className={getLinkClass('/gallery')}>
             Gallery
           </Link>
         </div>
@@ -33,9 +46,50 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <ConnectButton />
+          <ConnectButton
+            chainStatus={{
+              smallScreen: 'none',
+              largeScreen: 'full',
+            }}
+            accountStatus={{
+              smallScreen: 'avatar',
+              largeScreen: 'full',
+            }}
+            showBalance={{
+              smallScreen: true,
+              largeScreen: true,
+            }}
+          />
+
+          <button className="md:hidden z-20" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-background z-10 md:hidden pt-20 px-4">
+          <div className="flex flex-col items-center gap-8 py-8">
+            <Link href="/" className={`text-xl ${getLinkClass('/')}`} onClick={() => setMobileMenuOpen(false)}>
+              Home
+            </Link>
+            <Link href="/mint" className={`text-xl ${getLinkClass('/mint')}`} onClick={() => setMobileMenuOpen(false)}>
+              Mint
+            </Link>
+            <Link href="/gallery" className={`text-xl ${getLinkClass('/gallery')}`} onClick={() => setMobileMenuOpen(false)}>
+              Gallery
+            </Link>
+
+            <div className="w-full max-w-md mt-4">
+              <div className="flex items-center rounded-full border border-input bg-background px-4 py-3">
+                <input type="text" placeholder="Search" className="w-full bg-transparent outline-none text-base text-foreground placeholder-muted-foreground" />
+                <Search className="ml-2 h-5 w-5 text-muted-foreground" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="border-b border-border w-full"></div>
     </header>
   );

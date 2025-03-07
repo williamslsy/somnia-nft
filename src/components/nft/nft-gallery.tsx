@@ -3,13 +3,36 @@ import React from 'react';
 import { useAccount } from 'wagmi';
 import { NFTCard } from './nft-card';
 import { useNFT } from '@/hooks/useNFT';
+import { Button } from '../ui/button';
+import Link from 'next/link';
 
 function NFTGallery() {
   const { isConnected } = useAccount();
   const { ownedNFTs, nftMetadata, fetchTokenMetadata } = useNFT();
 
-  if (!isConnected || ownedNFTs.length === 0) {
-    return null;
+  if (!isConnected) {
+    return (
+      <section className="w-full py-12 bg-muted/10">
+        <div className="container mx-auto px-4 text-center">
+          <h3 className="text-2xl font-bold mb-4">Connect Your Wallet</h3>
+          <p className="text-muted-foreground mb-6">Connect your wallet to view your NFT collection</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (ownedNFTs.length === 0) {
+    return (
+      <section className="w-full py-12 bg-muted/10">
+        <div className="container mx-auto px-4 text-center">
+          <h3 className="text-2xl font-bold mb-4">No NFTs Found</h3>
+          <p className="text-muted-foreground mb-6">You don`t have any Somnia NFTs yet</p>
+          <Link href="/mint">
+            <Button className="btn-primary">Mint Your First NFT</Button>
+          </Link>
+        </div>
+      </section>
+    );
   }
 
   return (

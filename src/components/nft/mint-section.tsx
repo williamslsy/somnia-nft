@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useNFT } from '@/hooks/useNFT';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { useNFTContext } from '@/contexts/NFTProvider';
 import { ERC20MinterDialog } from './erc20-minter-dialog';
 import { Logo } from '../ui/logo';
@@ -32,6 +32,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     erc20Balance,
     hasEnoughERC20,
     mintWithERC20,
+    setMintAmount,
   } = useNFT();
 
   const handlePaymentMethodChange = (value: string) => {
@@ -39,17 +40,21 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
   };
 
   const handleMint = useCallback(async () => {
-    if (paymentMethod === 'native') {
-      return mintNativeToken(mintAmount);
-    } else {
-      return mintWithERC20(mintAmount);
+    try {
+      if (paymentMethod === 'native') {
+        await mintNativeToken(mintAmount);
+      } else {
+        await mintWithERC20(mintAmount);
+      }
+
+      if (typeof setMintAmount === 'function') {
+        setMintAmount(1);
+      }
+    } catch (error) {
+      console.error('Minting failed:', error);
     }
-  }, [paymentMethod, mintNativeToken, mintAmount, mintWithERC20]);
+  }, [paymentMethod, mintNativeToken, mintAmount, mintWithERC20, setMintAmount]);
 
-  // Determine button state for ERC20 minting
-  // const isERC20MintDisabled = !isConnected || isMinting || isApprovingERC20 || !hasEnoughERC20;
-
-  // Get button text for ERC20 minting
   const getERC20ButtonText = () => {
     if (!isConnected) return 'Connect Wallet to Mint';
     if (isMinting) return 'Minting...';
@@ -66,11 +71,11 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
             <div className="w-full md:w-2/5 flex-shrink-0">
               <div className="rounded-[24px] bg-primary/5 aspect-square flex items-center justify-center overflow-hidden">
                 {isLoading ? (
-                  <div className="flex items-center justify-center w-full h-full">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-4/5 h-4/5 rounded-lg bg-muted/50 animate-pulse"></div>
                   </div>
                 ) : (
-                  <Image src={showcaseMetadata.image} alt={showcaseMetadata.name || 'Somnia Mascot Pixel Art'} width={400} height={400} className="object-contain w-4/5 h-4/5" />
+                  <Image src={showcaseMetadata.image} alt={showcaseMetadata.name || 'Somnia Mascot Pixel Art'} width={400} height={400} className="object-contain w-4/5 h-4/5" priority />
                 )}
               </div>
             </div>
@@ -86,8 +91,11 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                 </div>
                 {isConnected && (
                   <div className="flex items-center gap-2 text-primary text-sm font-medium bg-primary/10 px-4 py-1.5 rounded-full mb-5">
-                    {' '}
-                    <span>{ownedNFTs.length} NFTs minted</span>
+                    {isLoading ? (
+                      <span className="w-16 h-4 bg-primary/20 animate-pulse rounded"></span>
+                    ) : (
+                      <span>{ownedNFTs.length === 0 ? 'No NFTs minted' : ownedNFTs.length === 1 ? '1 NFT minted' : `${ownedNFTs.length} NFTs minted`}</span>
+                    )}
                   </div>
                 )}
               </div>

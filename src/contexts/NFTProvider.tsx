@@ -42,9 +42,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
   const { address } = useAccount();
 
-  // Track previous address to detect account changes
-  const [previousAddress, setPreviousAddress] = useState<`0x${string}` | undefined>(undefined);
-
   const { data: hash, error, isPending, writeContract } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
@@ -101,6 +98,22 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       console.error('Error fetching ERC20 balance:', err);
       setERC20Balance(BigInt(0));
+    }
+  }, [address]);
+
+  // Private function to get the current balance (without updating state)
+  const getCurrentERC20Balance = useCallback(async (): Promise<bigint> => {
+    if (!address) return BigInt(0);
+
+    try {
+      return (await publicClient.readContract({
+        ...erc20ContractConfig,
+        functionName: 'balanceOf',
+        args: [address],
+      })) as bigint;
+    } catch (err) {
+      console.error('Error fetching ERC20 balance:', err);
+      return BigInt(0);
     }
   }, [address]);
 
@@ -210,6 +223,19 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Wallet not connected');
       }
 
+      // First check if we have enough balance
+      const balance = await getCurrentERC20Balance();
+      const requiredAmount = parseEther(NFT_PRICE) * BigInt(amount);
+
+      if (balance < requiredAmount) {
+        toast({
+          title: 'Insufficient IKOIN',
+          description: `You need at least ${parseFloat(NFT_PRICE) * amount} IKOIN to mint ${amount} NFT(s)`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Then check if we need approval first
       const hasApproval = await checkERC20Approval();
 
@@ -224,42 +250,16 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         await executeERC20Mint(amount);
       }
     },
-    [address, checkERC20Approval, approveERC20, executeERC20Mint]
+    [address, getCurrentERC20Balance, checkERC20Approval, approveERC20, executeERC20Mint]
   );
 
-  // Effect for checking ERC20 approval and balance when address changes
+  // Effect for checking ERC20 approval and balance
   useEffect(() => {
     if (address) {
       checkERC20Approval();
       fetchERC20Balance();
     }
   }, [address, checkERC20Approval, fetchERC20Balance]);
-
-  // Handle account switching
-  useEffect(() => {
-    // Check if account has changed
-    if (address && previousAddress && address !== previousAddress) {
-      // Reset state when account changes
-      setIsMinting(false);
-      setIsConfirmed(false);
-      setHasERC20Approval(false);
-      setIsApprovingERC20(false);
-      setIsAwaitingApproval(false);
-      setPendingMintAmount(null);
-
-      // Notify user of account change
-      toast({
-        title: 'Account Changed',
-        description: `Switched to ${address.slice(0, 6)}...${address.slice(-4)}`,
-      });
-
-      // Refresh data for the new account
-      checkERC20Approval();
-      fetchERC20Balance();
-    }
-
-    setPreviousAddress(address);
-  }, [address, previousAddress, checkERC20Approval, fetchERC20Balance]);
 
   const getNFTsOwned = useCallback(async (userAddress: `0x${string}`) => {
     try {

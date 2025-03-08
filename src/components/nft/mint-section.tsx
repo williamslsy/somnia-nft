@@ -5,20 +5,26 @@ import { useAccount } from 'wagmi';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useNFT } from '@/hooks/useNFT';
-import { PlusCircle, Loader2, Minus, Plus, Info } from 'lucide-react';
+import { PlusCircle, Loader2, Minus, Plus, Info, ExternalLink } from 'lucide-react';
 import { useNFTContext } from '@/contexts/NFTProvider';
 import { ERC20MinterDialog } from './erc20-minter-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Logo } from '../ui/logo';
+import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MintSectionProps {
   paymentMethod: 'native' | 'erc20';
   onPaymentMethodChange: (method: 'native' | 'erc20') => void;
 }
 
+const MAX_NFT_LIMIT = 50;
+
 function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps) {
   const { isConnected } = useAccount();
-  const { isMinting, isApprovingERC20 } = useNFTContext();
+  const { isMinting, isApprovingERC20, hasERC20Approval } = useNFTContext();
   const [isERC20Minting, setIsERC20Minting] = useState(false);
+  const [prevConnected, setPrevConnected] = useState(isConnected);
 
   const {
     mintAmount,
@@ -34,13 +40,49 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     hasEnoughERC20,
     mintWithERC20,
     setMintAmount,
+    sttBalance,
+    hasEnoughSTT,
   } = useNFT();
 
+  // Calculate the remaining NFTs the user can mint
+  const remainingMintAllowance = MAX_NFT_LIMIT - ownedNFTs.length;
+
+  // Check if user has reached their maximum limit
+  const hasReachedMaxLimit = remainingMintAllowance <= 0;
+
+  // Check if current mintAmount exceeds remaining allowance
+  const exceedsRemainingAllowance = mintAmount > remainingMintAllowance;
+
+  // Custom increment handler that respects maximum limits
+  const handleIncrementWithLimit = useCallback(() => {
+    if (mintAmount < remainingMintAllowance) {
+      handleIncrementMint();
+    }
+  }, [mintAmount, remainingMintAllowance, handleIncrementMint]);
+
+  // Effect to adjust mint amount if it exceeds remaining allowance
+  useEffect(() => {
+    if (isConnected && exceedsRemainingAllowance && setMintAmount && remainingMintAllowance > 0) {
+      setMintAmount(remainingMintAllowance);
+    }
+  }, [isConnected, exceedsRemainingAllowance, remainingMintAllowance, setMintAmount]);
+
+  // Existing effects...
   useEffect(() => {
     if (isERC20Minting) {
       setIsERC20Minting(false);
     }
   }, [erc20Balance, isERC20Minting]);
+
+  useEffect(() => {
+    // If previously connected and now disconnected, reset to 1
+    if (prevConnected && !isConnected && setMintAmount) {
+      setMintAmount(1);
+    }
+
+    // Update the previous connection state
+    setPrevConnected(isConnected);
+  }, [isConnected, prevConnected, setMintAmount]);
 
   const handlePaymentMethodChange = (value: string) => {
     onPaymentMethodChange(value as 'native' | 'erc20');
@@ -67,6 +109,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     if (isMinting) return 'Minting...';
     if (isApprovingERC20) return 'Approving IKOIN...';
     if (!hasEnoughERC20) return `Insufficient IKOIN Balance`;
+    if (hasReachedMaxLimit) return `Maximum Limit (50) Reached`;
     return `Mint ${mintAmount} for ${mintPrice.toFixed(4)} IKOIN`;
   };
 
@@ -81,13 +124,20 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                 <span className="text-white text-xs font-medium">Minting Now</span>
               </div>
               {isConnected && (
-                <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                  {isLoading ? (
-                    <span className="text-white text-xs font-medium">Loading...</span>
-                  ) : (
-                    <span className="text-white text-xs font-medium">{ownedNFTs.length === 0 ? 'No NFTs minted' : ownedNFTs.length === 1 ? '1 NFT minted' : `${ownedNFTs.length} NFTs minted`}</span>
-                  )}
-                </div>
+                <Link href="/gallery" className="group">
+                  <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 hover:bg-white/30 transition-colors cursor-pointer">
+                    {isLoading ? (
+                      <Skeleton className="h-5 w-24 bg-white/30 rounded-full" />
+                    ) : (
+                      <div className="flex items-center space-x-1">
+                        <span className="text-white text-xs font-medium">
+                          {ownedNFTs.length === 0 ? 'No NFTs minted' : ownedNFTs.length === 1 ? '1 NFT minted' : `${ownedNFTs.length} NFTs minted`}
+                        </span>
+                        <ExternalLink className="h-3 w-3 ml-1 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    )}
+                  </div>
+                </Link>
               )}
             </div>
           </div>
@@ -160,20 +210,52 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                 <TabsContent value="native" className="mt-4">
                   <div className="bg-slate-50 dark:bg-slate-800/30 rounded-xl p-5 mb-6">
                     <h3 className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Mint with native STT tokens</h3>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Price:</span>
-                      <span className="text-lg font-semibold text-slate-900 dark:text-white">{mintPrice.toFixed(4)} STT</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Your Balance:</span>
-                      <span className={`${!hasEnoughERC20 ? 'text-destructive' : 'text-sm text-slate-700 dark:text-slate-300'}`}>{erc20Balance} IKOIN</span>
-                    </div>
+                    {isConnected ? (
+                      <>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Price:</span>
+                          <span className="text-lg font-semibold text-slate-900 dark:text-white">{mintPrice.toFixed(4)} STT</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Your Balance:</span>
+                          <span className={`text-sm ${!hasEnoughSTT ? 'text-destructive' : 'text-slate-700 dark:text-slate-300'}`}>{sttBalance} STT</span>
+                        </div>
+                        {!hasEnoughSTT && (
+                          <div className="flex justify-between items-center mt-4">
+                            <span className="text-sm text-slate-500 dark:text-slate-400">Need more tokens?</span>
+                            <a href="https://testnet.somnia.network/" target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" className="btn-primary text-white">
+                                Get STT Tokens
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Price:</span>
+                        <span className="text-lg font-semibold text-slate-900 dark:text-white">{mintPrice.toFixed(4)} STT</span>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="erc20" className="mt-4">
                   <div className="bg-slate-50 dark:bg-slate-800/30 rounded-xl p-5 mb-6">
-                    <h3 className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Mint with IKOIN ERC20 tokens</h3>
+                    <div className="flex justify-between">
+                      <h3 className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Mint with IKOIN ERC20 tokens</h3>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={`font-medium text-sm ${hasERC20Approval ? 'text-green-500' : 'text-amber-500'} cursor-help`}>{hasERC20Approval ? 'Approved ✓' : 'Approve ⚠️'}</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          {hasERC20Approval
+                            ? 'You have approved the NFT contract to use your IKOIN tokens for minting.'
+                            : 'Before minting with IKOIN, you need to approve the NFT contract to use your tokens. This is a one-time transaction required for security.'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
 
                     {isConnected ? (
                       <>
@@ -183,7 +265,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Your Balance:</span>
-                          <span className={`${!hasEnoughERC20 ? 'text-destructive' : 'text-sm text-slate-700 dark:text-slate-300'}`}>{erc20Balance} IKOIN</span>
+                          <span className={`text-sm ${!hasEnoughERC20 ? 'text-destructive' : 'text-slate-700 dark:text-slate-300'}`}>{erc20Balance} IKOIN</span>
                         </div>
                         {!hasEnoughERC20 && (
                           <div className="flex justify-between items-center mt-4">
@@ -193,13 +275,13 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                                 <Button size="sm" className="btn-primary text-white" disabled={isMinting || isApprovingERC20 || isERC20Minting}>
                                   {isERC20Minting ? (
                                     <>
-                                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                      <Loader2 className="h-3 w-3 animate-spin" />
                                       Minting...
                                     </>
                                   ) : (
                                     <>
-                                      <PlusCircle className="h-3 w-3 mr-1" />
                                       Get IKOIN Tokens
+                                      <PlusCircle className="h-3 w-3" />
                                     </>
                                   )}
                                 </Button>
@@ -219,59 +301,65 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
               </Tabs>
 
               <div className="mt-auto">
-                <div className="flex items-stretch gap-3 mb-5">
-                  <div className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800 p-1 h-14">
+                <div className="flex items-stretch gap-3 gap-x-1 sm:gap-3 mb-5">
+                  <div className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800 p-0.5 sm:p-1 h-12 sm:h-14">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleDecrementMint}
                       disabled={!isConnected || mintAmount <= 1 || isMinting || isApprovingERC20 || isERC20Minting}
-                      className="w-12 h-12 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700"
                     >
-                      <Minus className="h-5 w-5" />
+                      <Minus className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
-                    <div className="w-14 flex items-center justify-center text-lg font-semibold text-slate-900 dark:text-white">{mintAmount}</div>
+                    <div className="w-10 sm:w-14 flex items-center justify-center text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{mintAmount}</div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={handleIncrementMint}
-                      disabled={!isConnected || isMinting || isApprovingERC20 || isERC20Minting}
-                      className="w-12 h-12 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700"
+                      onClick={handleIncrementWithLimit}
+                      disabled={!isConnected || isMinting || isApprovingERC20 || isERC20Minting || hasReachedMaxLimit || mintAmount >= remainingMintAllowance}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700"
                     >
-                      <Plus className="h-5 w-5" />
+                      <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
                   </div>
 
                   {paymentMethod === 'native' ? (
                     <Button
-                      disabled={!isConnected || isMinting || isERC20Minting}
+                      disabled={!isConnected || isMinting || isERC20Minting || (isConnected && (!hasEnoughSTT || hasReachedMaxLimit))}
                       onClick={handleMint}
-                      className="flex-1 bg-primary hover:bg-primary/90 rounded-xl text-white font-semibold py-2.5 px-4 h-14 shadow-lg text-base"
+                      className="flex-1 bg-primary hover:bg-primary/90 rounded-xl text-white font-semibold py-2 px-2 sm:px-4 h-12 sm:h-14 shadow-lg text-sm sm:text-base truncate"
                     >
                       {isMinting ? (
                         <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          Minting...
+                          <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                          <span className="truncate">Minting...</span>
                         </>
                       ) : isConnected ? (
-                        `Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT`
+                        !hasEnoughSTT ? (
+                          <span className="truncate">Insufficient STT Balance</span>
+                        ) : hasReachedMaxLimit ? (
+                          <span className="truncate">Maximum Limit (50) Reached</span>
+                        ) : (
+                          <span className="truncate">{`Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT`}</span>
+                        )
                       ) : (
-                        'Connect Wallet to Mint'
+                        <span className="truncate">Connect Wallet to Mint</span>
                       )}
                     </Button>
                   ) : (
                     <Button
-                      disabled={!isConnected || isMinting || isERC20Minting || (isConnected && (isApprovingERC20 || !hasEnoughERC20))}
+                      disabled={!isConnected || isMinting || isERC20Minting || (isConnected && (isApprovingERC20 || !hasEnoughERC20 || hasReachedMaxLimit))}
                       onClick={handleMint}
-                      className="flex-1 bg-primary hover:bg-primary/90 rounded-xl text-white font-semibold py-2.5 px-4 h-14 shadow-lg text-base"
+                      className="flex-1 bg-primary hover:bg-primary/90 rounded-xl text-white font-semibold py-2 px-2 sm:px-4 h-12 sm:h-14 shadow-lg text-sm sm:text-base truncate"
                     >
                       {isMinting ? (
                         <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          {getERC20ButtonText()}
+                          <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                          <span className="truncate">{getERC20ButtonText()}</span>
                         </>
                       ) : (
-                        getERC20ButtonText()
+                        <span className="truncate">{getERC20ButtonText()}</span>
                       )}
                     </Button>
                   )}
@@ -297,7 +385,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Mint Ends</p>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">December 21, 2025</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">March 21, 2025</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Creator Royalties</p>

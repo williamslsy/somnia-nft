@@ -6,6 +6,7 @@ import WalletProvider from '@/contexts/WalletProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { NFTProvider } from '@/contexts/NFTProvider';
 import { AccountProvider } from '@/contexts/AccountProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,8 +34,10 @@ export default function RootLayout({
         <WalletProvider>
           <AccountProvider>
             <NFTProvider>
-              <Header />
-              {children}
+              <TooltipProvider>
+                <Header />
+                {children}
+              </TooltipProvider>
             </NFTProvider>
           </AccountProvider>
         </WalletProvider>

@@ -17,6 +17,7 @@ export function useNFT() {
     erc20Balance,
     mintWithERC20,
     isApprovingERC20,
+    sttBalance,
   } = useNFTContext();
 
   // Mint-related state
@@ -41,6 +42,16 @@ export function useNFT() {
     const requiredAmount = 0.1111 * mintAmount;
     return Number(formatEther(erc20Balance)) >= requiredAmount;
   }, [erc20Balance, mintAmount]);
+
+  const formattedSTTBalance = useMemo(() => {
+    return Number(formatEther(sttBalance)).toFixed(4);
+  }, [sttBalance]);
+
+  // Calculate if user has enough STT tokens
+  const hasEnoughSTT = useMemo(() => {
+    const requiredAmount = 0.1111 * mintAmount;
+    return Number(formatEther(sttBalance)) >= requiredAmount;
+  }, [sttBalance, mintAmount]);
 
   // Toggle payment method
   const togglePaymentMethod = useCallback(() => {
@@ -117,45 +128,12 @@ export function useNFT() {
     return Number(maxTokenId) + 1;
   }, [ownedNFTs]);
 
-  // Get showcase metadata based on the next NFT in sequence
-  // const getShowcaseMetadata = useCallback(async () => {
-  //   // If we already have metadata for the next NFT, use it
-  //   if (nftMetadata[nextNftId]) {
-  //     return nftMetadata[nextNftId];
-  //   }
-
-  //   // If we're minting multiple NFTs, calculate the next NFT in sequence
-  //   const nextShowcaseId = nextNftId + (mintAmount - 1);
-
-  //   // If we have metadata for this calculated next NFT, use it
-  //   if (nftMetadata[nextShowcaseId]) {
-  //     return nftMetadata[nextShowcaseId];
-  //   }
-
-  //   // Otherwise, try to fetch the metadata for the next NFT
-  //   try {
-  //     // First try to fetch the next NFT in sequence after minting
-  //     const metadata = await fetchTokenMetadata(nextShowcaseId);
-  //     if (metadata) return metadata;
-
-  //     // If that fails, try to fetch the immediate next NFT
-  //     return await fetchTokenMetadata(nextNftId);
-  //   } catch (err) {
-  //     // If all fetches fail, return default metadata
-  //     return {
-  //       name: 'Somnia NFT',
-  //       description: 'A Somnia Devnet NFT',
-  //       image: '/assets/placeholder.svg',
-  //     };
-  //   }
-  // }, [nextNftId, mintAmount, nftMetadata, fetchTokenMetadata]);
-
-  // Minting handlers
+  // Custom increment handler that doesn't trigger showcase reload
   const handleIncrementMint = useCallback(() => {
-    // TODO: Add max mint limit logic
     setMintAmount((prev) => prev + 1);
   }, []);
 
+  // Custom decrement handler that doesn't trigger showcase reload
   const handleDecrementMint = useCallback(() => {
     setMintAmount((prev) => Math.max(1, prev - 1));
   }, []);
@@ -176,20 +154,15 @@ export function useNFT() {
     fetchOwnedNFTs();
   }, [isConnected, address, fetchBaseURI, fetchOwnedNFTs]);
 
-  // Fetch metadata when owned NFTs change
+  // Fetch metadata when owned NFTs change, but NOT when mintAmount changes
   useEffect(() => {
     fetchAllOwnedNFTsMetadata();
 
     // Also fetch the next NFT metadata to show in showcase
     if (nextNftId !== undefined) {
       fetchTokenMetadata(nextNftId);
-
-      // If minting multiple, also fetch the next NFT after minting
-      if (mintAmount > 1) {
-        fetchTokenMetadata(nextNftId + (mintAmount - 1));
-      }
     }
-  }, [ownedNFTs, nextNftId, mintAmount, fetchAllOwnedNFTsMetadata, fetchTokenMetadata]);
+  }, [ownedNFTs, nextNftId, fetchAllOwnedNFTsMetadata, fetchTokenMetadata]); // Removed mintAmount from dependencies
 
   // Load the showcase image only once when the component mounts
   useEffect(() => {
@@ -208,19 +181,11 @@ export function useNFT() {
     loadShowcaseImage();
   }, []); // Empty dependency array means this runs once on mount
 
-  // Calculate the showcase metadata
+  // Calculate the showcase metadata - don't depend on mintAmount
   const showcaseMetadata = useMemo(() => {
     // If we have metadata for the next NFT, use it
     if (nftMetadata[nextNftId]) {
       return nftMetadata[nextNftId];
-    }
-
-    // If we're minting multiple NFTs, check for the next NFT after minting
-    if (mintAmount > 1) {
-      const nextShowcaseId = nextNftId + (mintAmount - 1);
-      if (nftMetadata[nextShowcaseId]) {
-        return nftMetadata[nextShowcaseId];
-      }
     }
 
     // Default metadata if nothing else is available
@@ -229,7 +194,7 @@ export function useNFT() {
       description: 'A Somnia Devnet NFT',
       image: '/assets/placeholder.svg',
     };
-  }, [nftMetadata, nextNftId, mintAmount]);
+  }, [nftMetadata, nextNftId]); // Removed mintAmount from dependencies
 
   // Wrapper for mintNativeToken that doesn't need to call refetchOwnedNFTs
   // since it will be called via the success callback
@@ -270,5 +235,7 @@ export function useNFT() {
     hasEnoughERC20,
     isApprovingERC20,
     mintWithERC20,
+    sttBalance: formattedSTTBalance,
+    hasEnoughSTT,
   };
 }

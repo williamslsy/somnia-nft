@@ -34,6 +34,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     mintPrice,
     ownedNFTs,
     isLoading,
+    isImageLoading,
     showcaseMetadata,
 
     erc20Balance,
@@ -145,7 +146,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
           <div className="flex flex-col lg:flex-row">
             <div className="hidden md:block w-full lg:w-5/12 p-6 md:p-8">
               <div className="aspect-square rounded-2xl overflow-hidden bg-primary/5 relative flex items-center justify-center group shadow-lg">
-                {isLoading ? (
+                {isImageLoading ? (
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="w-4/5 h-4/5 rounded-lg bg-muted/50 animate-pulse"></div>
                   </div>

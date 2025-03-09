@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { getNFTMetadata, getTokenBaseURI, NFTMetadata } from '@/lib/metadata';
 import { useNFTContext } from '@/contexts/NFTProvider';
@@ -32,6 +32,14 @@ export function useNFT() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Use refs to track values without causing re-renders
+  const prevOwnedNFTsRef = useRef<bigint[]>([]);
+  const showcaseMetadataRef = useRef<NFTMetadata | null>(null);
+  const nextNftIdRef = useRef<number>(0);
+
+  // Track if we've loaded the initial data
+  const initialDataLoadedRef = useRef(false);
+
   // Format ERC20 balance for display
   const formattedERC20Balance = useMemo(() => {
     return Number(formatEther(erc20Balance)).toFixed(4);
@@ -53,12 +61,17 @@ export function useNFT() {
     return Number(formatEther(sttBalance)) >= requiredAmount;
   }, [sttBalance, mintAmount]);
 
+  // Calculate mint price - memoized
+  const mintPrice = useMemo(() => {
+    return 0.1111 * mintAmount;
+  }, [mintAmount]);
+
   // Toggle payment method
   const togglePaymentMethod = useCallback(() => {
     setPaymentMethod((prev) => (prev === 'native' ? 'erc20' : 'native'));
   }, []);
 
-  // Fetch base URI
+  // Fetch base URI - only needs to run once
   const fetchBaseURI = useCallback(async () => {
     try {
       const uri = await getTokenBaseURI();
@@ -69,30 +82,27 @@ export function useNFT() {
     }
   }, []);
 
-  // Fetch owned NFTs
-  const fetchOwnedNFTs = useCallback(async () => {
-    if (!isConnected || !address) return;
-
-    setIsLoading(true);
-    try {
-      const nfts = await getNFTsOwned(address);
-      setOwnedNFTs(nfts);
-    } catch (err) {
-      console.error('Error fetching owned NFTs:', err);
-      setError('Failed to fetch owned NFTs');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isConnected, address, getNFTsOwned]);
-
-  // Fetch metadata for a specific token
-  const fetchTokenMetadata = useCallback(async (tokenId: number) => {
+  // Fetch metadata for a specific token with optional force refresh flag
+  const fetchTokenMetadata = useCallback(async (tokenId: number, forceShowcaseUpdate = false) => {
     try {
       const metadata = await getNFTMetadata(tokenId);
-      setNFTMetadata((prev) => ({
-        ...prev,
-        [tokenId]: metadata,
-      }));
+
+      setNFTMetadata((prev) => {
+        // Only update if metadata has changed or doesn't exist
+        if (!prev[tokenId] || JSON.stringify(prev[tokenId]) !== JSON.stringify(metadata)) {
+          return {
+            ...prev,
+            [tokenId]: metadata,
+          };
+        }
+        return prev;
+      });
+
+      // If this is the next NFT ID or we're forcing a showcase update
+      if (tokenId === nextNftIdRef.current || forceShowcaseUpdate) {
+        showcaseMetadataRef.current = metadata;
+      }
+
       return metadata;
     } catch (err) {
       console.error(`Error fetching metadata for token ${tokenId}:`, err);
@@ -100,46 +110,90 @@ export function useNFT() {
     }
   }, []);
 
-  // Fetch metadata for all owned NFTs
+  // Updated fetchOwnedNFTs to avoid unnecessary re-renders
+  const fetchOwnedNFTs = useCallback(async () => {
+    if (!isConnected || !address) return;
+
+    // Only show loading state on initial load
+    if (!initialDataLoadedRef.current) {
+      setIsLoading(true);
+    }
+
+    try {
+      const nfts = await getNFTsOwned(address);
+
+      // Only update state if NFTs have actually changed to prevent re-renders
+      if (!areArraysEqual(nfts, prevOwnedNFTsRef.current)) {
+        setOwnedNFTs(nfts);
+        prevOwnedNFTsRef.current = nfts;
+
+        // Update the nextNftId ref when ownedNFTs change
+        if (nfts.length === 0) {
+          nextNftIdRef.current = 0;
+        } else {
+          // Find the maximum token ID and add 1
+          const maxTokenId = nfts.reduce((max, current) => {
+            return Number(current) > Number(max) ? current : max;
+          }, nfts[0]);
+          nextNftIdRef.current = Number(maxTokenId) + 1;
+        }
+
+        // This is a real change, we need to fetch the showcase metadata
+        if (nextNftIdRef.current !== undefined) {
+          fetchTokenMetadata(nextNftIdRef.current, true);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching owned NFTs:', err);
+      setError('Failed to fetch owned NFTs');
+    } finally {
+      if (!initialDataLoadedRef.current) {
+        setIsLoading(false);
+        initialDataLoadedRef.current = true;
+      }
+    }
+  }, [isConnected, address, getNFTsOwned, fetchTokenMetadata]);
+
+  // Helper function to check if two arrays of bigints are equal
+  const areArraysEqual = (arr1: bigint[], arr2: bigint[]) => {
+    if (arr1.length !== arr2.length) return false;
+    return arr1.every((val, idx) => val === arr2[idx]);
+  };
+
+  // Fetch metadata for all owned NFTs - optimized to avoid unnecessary fetches
   const fetchAllOwnedNFTsMetadata = useCallback(async () => {
     if (ownedNFTs.length === 0) return;
 
-    setIsLoading(true);
+    // This should only run when ownedNFTs actually changes
+    const metadataPromises = ownedNFTs.map((tokenId) => {
+      // Only fetch if we don't have the metadata already
+      if (!nftMetadata[Number(tokenId)]) {
+        return fetchTokenMetadata(Number(tokenId));
+      }
+      return Promise.resolve(nftMetadata[Number(tokenId)]);
+    });
+
     try {
-      const metadataPromises = ownedNFTs.map((tokenId) => fetchTokenMetadata(Number(tokenId)));
       await Promise.all(metadataPromises);
     } catch (err) {
       console.error('Error fetching all NFT metadata:', err);
       setError('Failed to fetch NFT metadata');
-    } finally {
-      setIsLoading(false);
     }
-  }, [ownedNFTs, fetchTokenMetadata]);
+  }, [ownedNFTs, nftMetadata, fetchTokenMetadata]);
 
-  // Calculate the next NFT ID in the sequence
-  const nextNftId = useMemo(() => {
-    if (ownedNFTs.length === 0) return 0;
-
-    // Find the maximum token ID and add 1
-    const maxTokenId = ownedNFTs.reduce((max, current) => {
-      return Number(current) > Number(max) ? current : max;
-    }, ownedNFTs[0]);
-
-    return Number(maxTokenId) + 1;
-  }, [ownedNFTs]);
-
-  // Custom increment handler that doesn't trigger showcase reload
+  // Custom increment handler
   const handleIncrementMint = useCallback(() => {
     setMintAmount((prev) => prev + 1);
   }, []);
 
-  // Custom decrement handler that doesn't trigger showcase reload
+  // Custom decrement handler
   const handleDecrementMint = useCallback(() => {
     setMintAmount((prev) => Math.max(1, prev - 1));
   }, []);
 
   // Register the refetch callback when the component mounts
   useEffect(() => {
+    // This is the key part - we only want to refetch NFTs when minting is successful
     registerSuccessCallback(fetchOwnedNFTs);
 
     // Clean up when the component unmounts
@@ -148,29 +202,30 @@ export function useNFT() {
     };
   }, [registerSuccessCallback, unregisterSuccessCallback, fetchOwnedNFTs]);
 
-  // Initial data fetching
+  // Initial data fetching - only on connect/disconnect or address change
   useEffect(() => {
     fetchBaseURI();
     fetchOwnedNFTs();
   }, [isConnected, address, fetchBaseURI, fetchOwnedNFTs]);
 
-  // Fetch metadata when owned NFTs change, but NOT when mintAmount changes
+  // Fetch metadata for owned NFTs - only when ownedNFTs actually changes
   useEffect(() => {
     fetchAllOwnedNFTsMetadata();
-
-    // Also fetch the next NFT metadata to show in showcase
-    if (nextNftId !== undefined) {
-      fetchTokenMetadata(nextNftId);
-    }
-  }, [ownedNFTs, nextNftId, fetchAllOwnedNFTsMetadata, fetchTokenMetadata]); // Removed mintAmount from dependencies
+  }, [ownedNFTs, fetchAllOwnedNFTsMetadata]);
 
   // Load the showcase image only once when the component mounts
   useEffect(() => {
     const loadShowcaseImage = async () => {
       setIsImageLoading(true);
       try {
-        // Load your showcase metadata here
-        // ...
+        // Initialize default showcase metadata if needed
+        if (!showcaseMetadataRef.current) {
+          showcaseMetadataRef.current = {
+            name: 'Somnia NFT',
+            description: 'A Somnia Devnet NFT',
+            image: '/assets/placeholder.svg',
+          };
+        }
       } catch (error) {
         console.error('Failed to load showcase image:', error);
       } finally {
@@ -181,29 +236,30 @@ export function useNFT() {
     loadShowcaseImage();
   }, []); // Empty dependency array means this runs once on mount
 
-  // Calculate the showcase metadata - don't depend on mintAmount
-  const showcaseMetadata = useMemo(() => {
+  // Get showcase metadata without causing re-renders
+  const getShowcaseMetadata = useCallback(() => {
     // If we have metadata for the next NFT, use it
-    if (nftMetadata[nextNftId]) {
-      return nftMetadata[nextNftId];
+    if (nftMetadata[nextNftIdRef.current]) {
+      // Only update the ref if it's different to avoid unnecessary changes
+      if (JSON.stringify(showcaseMetadataRef.current) !== JSON.stringify(nftMetadata[nextNftIdRef.current])) {
+        showcaseMetadataRef.current = nftMetadata[nextNftIdRef.current];
+      }
     }
 
-    // Default metadata if nothing else is available
-    return {
-      name: 'Somnia NFT',
-      description: 'A Somnia Devnet NFT',
-      image: '/assets/placeholder.svg',
-    };
-  }, [nftMetadata, nextNftId]); // Removed mintAmount from dependencies
+    // If we don't have a showcase metadata yet, use a default
+    if (!showcaseMetadataRef.current) {
+      showcaseMetadataRef.current = {
+        name: 'Somnia NFT',
+        description: 'A Somnia Devnet NFT',
+        image: '/assets/placeholder.svg',
+      };
+    }
 
-  // Wrapper for mintNativeToken that doesn't need to call refetchOwnedNFTs
-  // since it will be called via the success callback
-  // const handleMint = useCallback(
-  //   (amount: number) => {
-  //     return mintNativeToken(amount);
-  //   },
-  //   [mintNativeToken]
-  // );
+    return showcaseMetadataRef.current;
+  }, [nftMetadata]);
+
+  // Get the current showcase metadata
+  const showcaseMetadata = getShowcaseMetadata();
 
   return {
     // Minting-related returns
@@ -212,7 +268,7 @@ export function useNFT() {
     mintNativeToken,
     handleIncrementMint,
     handleDecrementMint,
-    mintPrice: 0.1111 * mintAmount,
+    mintPrice,
 
     // NFT ownership and metadata returns
     ownedNFTs,
@@ -221,7 +277,7 @@ export function useNFT() {
     isImageLoading,
     isLoading,
     error,
-    nextNftId,
+    nextNftId: nextNftIdRef.current,
     showcaseMetadata,
 
     // Utility methods

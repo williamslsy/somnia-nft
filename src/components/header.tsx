@@ -56,8 +56,8 @@ export function Header() {
               largeScreen: 'full',
             }}
             showBalance={{
-              smallScreen: true,
-              largeScreen: true,
+              smallScreen: false,
+              largeScreen: false,
             }}
           />
 

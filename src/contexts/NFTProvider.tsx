@@ -444,9 +444,10 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
         // Refresh IKOIN balance after mint
         fetchERC20Balance();
+        fetchSTTBalance();
       }
     }
-  }, [hash, isConfirming, isSuccess, error, successCallback, isAwaitingApproval, pendingMintAmount, executeERC20Mint, fetchERC20Balance]);
+  }, [hash, isConfirming, isSuccess, error, successCallback, isAwaitingApproval, pendingMintAmount, executeERC20Mint, fetchERC20Balance, fetchSTTBalance]);
 
   const contextValue: NFTContextType = {
     isPending,

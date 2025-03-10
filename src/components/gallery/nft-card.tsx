@@ -7,6 +7,7 @@ import { NFTMetadata } from '@/services/getNFTMetadata';
 
 import { Button } from '../ui/button';
 import { Logo } from '../logo';
+import { useNFTRarity } from '@/hooks/useNFTRarity';
 
 interface NFTCardProps {
   tokenId?: bigint;
@@ -26,16 +27,7 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
 
   const isLoading = tokenId && !metadata;
 
-  const getRarityInfo = () => {
-    if (!tokenId) return { label: 'Limited Edition', colorClass: 'bg-blue-500/50 text-blue-500' };
-
-    const id = Number(tokenId);
-    if (id < 10) return { label: 'Legendary', colorClass: 'bg-yellow-500/50 text-yellow-500' };
-    if (id < 100) return { label: 'Rare', colorClass: 'bg-purple-500/50 text-purple-500' };
-    return { label: 'Common', colorClass: 'bg-blue-500/50 text-blue-500' };
-  };
-
-  const { label: rarityLabel, colorClass: rarityColorClass } = getRarityInfo();
+  const { label: rarityLabel, colorClass: rarityColorClass } = useNFTRarity(Number(tokenId));
 
   return (
     <div
@@ -59,8 +51,8 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
               className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
 
-            <div className={`absolute top-3 left-3 bg-background rounded-full px-3 py-1 shadow-md ${rarityColorClass} backdrop-blur-sm text-xs font-semibold px-3 py-1.5 rounded-full z-20`}>
-              {rarityLabel}
+            <div className={`absolute top-3 left-3 bg-background rounded-full px-3 py-1 shadow-md ${rarityColorClass}`}>
+              <span className="text-xs font-bold">{rarityLabel}</span>
             </div>
 
             <div className="absolute inset-x-0 bottom-0 p-4 z-20 flex justify-center gap-2 transition-opacity duration-300" style={{ opacity: isHovered ? 1 : 0 }}>

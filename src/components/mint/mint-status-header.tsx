@@ -20,16 +20,16 @@ export const MintStatusHeader = ({ isConnected, isLoading, ownedNFTsLength, maxN
         </div>
 
         {isConnected && (
-          <Link href="/gallery" className="btn-with-arrow">
+          <Link href="/gallery" className="group">
             <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 transition-colors cursor-pointer">
               {isLoading ? (
                 <Skeleton className="h-5 w-24 bg-white/30 rounded-full" />
               ) : (
                 <div className="flex items-center space-x-1 h-5">
-                  <span className="text-white text-xs font-bold">
+                  <span className="text-white text-xs font-bold group-hover:pr-0.5 transition-padding duration-300">
                     {ownedNFTsLength === 0 ? 'No NFTs minted' : ownedNFTsLength === 1 ? '1 NFT minted' : `${ownedNFTsLength} / ${maxNftLimit} NFTs minted`}
                   </span>
-                  <ArrowRight className="h-3 w-3 ml-1 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
+                  <ArrowRight className="h-3 w-3 text-white opacity-70 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               )}
             </div>

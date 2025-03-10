@@ -2,13 +2,17 @@ import React, { memo } from 'react';
 import Image from 'next/image';
 import { NFTMetadata } from '@/services/getNFTMetadata';
 import { Loader2 } from 'lucide-react';
+import { useNFTRarity } from '@/hooks/useNFTRarity';
 
 interface NFTShowcaseProps {
   showcaseMetadata: NFTMetadata | null;
   isLoading: boolean;
+  tokenId?: number;
 }
 
-const NFTShowcase = memo(({ showcaseMetadata, isLoading }: NFTShowcaseProps) => {
+const NFTShowcase = memo(({ showcaseMetadata, isLoading, tokenId }: NFTShowcaseProps) => {
+  const { label: rarityLabel, colorClass: rarityColorClass } = useNFTRarity(tokenId);
+
   return (
     <div className="aspect-square rounded-2xl overflow-hidden bg-primary/5 relative flex items-center justify-center group shadow-lg">
       {isLoading || !showcaseMetadata ? (
@@ -24,9 +28,11 @@ const NFTShowcase = memo(({ showcaseMetadata, isLoading }: NFTShowcaseProps) => 
         </>
       )}
 
-      <div className="absolute top-3 left-3 bg-background rounded-full px-3 py-1 shadow-md">
-        <span className="text-primary text-xs font-bold">Limited Edition</span>
-      </div>
+      {showcaseMetadata && (
+        <div className={`absolute top-3 left-3 bg-background rounded-full px-3 py-1 shadow-md ${rarityColorClass}`}>
+          <span className="text-xs font-bold">{rarityLabel}</span>
+        </div>
+      )}
     </div>
   );
 });

@@ -26,7 +26,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
   const { isMinting, isApprovingERC20, hasERC20Approval } = useNFTContext();
   const [isERC20Minting, setIsERC20Minting] = useState(false);
 
-  const { mintNativeToken, mintWithERC20, mintPrice, ownedNFTs, isLoading, isImageLoading, showcaseMetadata, erc20Balance, sttBalance, setMintAmount: setNFTMintAmount } = useNFT();
+  const { mintNativeToken, mintWithERC20, mintPrice, ownedNFTs, isLoading, isImageLoading, showcaseMetadata, erc20Balance, sttBalance, setMintAmount: setNFTMintAmount, tokenId } = useNFT();
 
   const { maxNftLimit, remainingMintAllowance, hasReachedMaxLimit, isLimitsLoading, refreshMintedCount } = useMintLimits({
     isConnected,
@@ -99,7 +99,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
 
           <div className="flex flex-col lg:flex-row">
             <div className="w-full lg:w-5/12 p-6 md:p-8">
-              <NFTShowcase showcaseMetadata={showcaseMetadata} isLoading={isImageLoading} />
+              <NFTShowcase showcaseMetadata={showcaseMetadata} isLoading={isImageLoading} tokenId={tokenId} />
             </div>
 
             <div className="w-full lg:w-7/12 p-5 md:p-8">

@@ -49,7 +49,7 @@ export function useNFT() {
     ...mintControls,
 
     showcaseMetadata: showcaseMetadataState,
-
+    tokenId: ownership.nextNftId,
     refetchOwnedNFTs: ownership.fetchOwnedNFTs,
     fetchAllOwnedNFTsMetadata,
   };

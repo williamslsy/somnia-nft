@@ -1,12 +1,9 @@
-// hooks/useNFTLocalStorage.ts
 import { useEffect, useState } from 'react';
-
 interface UseNFTLocalStorageProps {
   isConnected: boolean;
   address?: string;
   ownedNFTs: bigint[];
 }
-
 interface UseNFTLocalStorageReturn {
   cachedNFTs: string[];
   isCacheChecked: boolean;
@@ -16,7 +13,6 @@ export function useNFTLocalStorage({ isConnected, address, ownedNFTs }: UseNFTLo
   const [cachedNFTs, setCachedNFTs] = useState<string[]>([]);
   const [isCacheChecked, setIsCacheChecked] = useState(false);
 
-  // Load cached NFTs from localStorage on mount
   useEffect(() => {
     if (isConnected && address) {
       const addressKey = `nft_cache_${address}`;
@@ -42,7 +38,6 @@ export function useNFTLocalStorage({ isConnected, address, ownedNFTs }: UseNFTLo
     }
   }, [isConnected, address]);
 
-  // Update cache when ownedNFTs change
   useEffect(() => {
     if (isConnected && address && ownedNFTs.length > 0) {
       const stringIds = ownedNFTs.map((id) => id.toString());

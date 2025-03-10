@@ -37,14 +37,12 @@ export const NFTGrid = ({ isLoading, nfts, nftMetadata, cachedNFTCount, onLoadMe
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {isLoading
-        ? // Show skeleton loaders while loading
-          Array.from({ length: cachedNFTCount || 4 }).map((_, index) => (
+        ? Array.from({ length: cachedNFTCount || 4 }).map((_, index) => (
             <motion.div key={`skeleton-${index}`} variants={cardVariants}>
               <NFTCardSkeleton />
             </motion.div>
           ))
-        : // Show actual NFTs once loaded
-          nfts.map((tokenId) => (
+        : nfts.map((tokenId) => (
             <motion.div key={tokenId.toString()} variants={cardVariants}>
               <NFTCard
                 tokenId={tokenId}

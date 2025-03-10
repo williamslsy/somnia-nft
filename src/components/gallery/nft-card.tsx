@@ -26,7 +26,6 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
 
   const isLoading = tokenId && !metadata;
 
-  // Get rarity label and color based on token ID or other properties
   const getRarityInfo = () => {
     if (!tokenId) return { label: 'Limited Edition', colorClass: 'bg-blue-500/50 text-blue-500' };
 
@@ -45,7 +44,6 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-square overflow-hidden">
-        {/* Image overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent z-10"></div>
 
         {isLoading ? (
@@ -61,12 +59,10 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
               className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
 
-            {/* Rarity badge */}
             <div className={`absolute top-3 left-3 bg-background rounded-full px-3 py-1 shadow-md ${rarityColorClass} backdrop-blur-sm text-xs font-semibold px-3 py-1.5 rounded-full z-20`}>
               {rarityLabel}
             </div>
 
-            {/* Action buttons (visible on hover) */}
             <div className="absolute inset-x-0 bottom-0 p-4 z-20 flex justify-center gap-2 transition-opacity duration-300" style={{ opacity: isHovered ? 1 : 0 }}>
               <Button size="icon" variant="secondary" className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-white">
                 <Eye className="h-4 w-4" />

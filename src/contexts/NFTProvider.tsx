@@ -406,6 +406,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         });
 
         if (pendingMintAmount !== null) {
+          setIsMinting(true);
           setTimeout(() => {
             executeERC20Mint(pendingMintAmount);
             setPendingMintAmount(null);

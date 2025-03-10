@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Loader2, Eye, Share2, Heart } from 'lucide-react';
-import { NFTMetadata } from '@/lib/metadata';
+import { NFTMetadata } from '@/services/getNFTMetadata';
 
 import { Button } from '../ui/button';
 import { Logo } from '../logo';

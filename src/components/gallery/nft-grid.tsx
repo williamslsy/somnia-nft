@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { NFTCard } from './nft-card';
 
-import { NFTMetadata } from '@/lib/metadata';
+import { NFTMetadata } from '@/services/getNFTMetadata';
 import { NFTCardSkeleton } from './nft-card-skeleton';
 
 interface NFTGridProps {

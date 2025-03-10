@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import Image from 'next/image';
-import { NFTMetadata } from '@/lib/metadata';
+import { NFTMetadata } from '@/services/getNFTMetadata';
 import { Loader2 } from 'lucide-react';
 
 interface NFTShowcaseProps {

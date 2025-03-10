@@ -13,19 +13,26 @@ import { Logo } from '../logo';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import NFTShowcase from './nft-showcase';
+import { getMintedTokensCount, getMaxTokensPerUser } from '@/services/getTokenLimits';
 
 interface MintSectionProps {
   paymentMethod: 'native' | 'erc20';
   onPaymentMethodChange: (method: 'native' | 'erc20') => void;
 }
 
-const MAX_NFT_LIMIT = 50;
+// Default max limit - will be updated from contract if possible
+const DEFAULT_MAX_NFT_LIMIT = 50;
 
 function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps) {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const { isMinting, isApprovingERC20, hasERC20Approval } = useNFTContext();
   const [isERC20Minting, setIsERC20Minting] = useState(false);
   const [prevConnected, setPrevConnected] = useState(isConnected);
+
+  // Contract limits state
+  const [maxNftLimit, setMaxNftLimit] = useState(DEFAULT_MAX_NFT_LIMIT);
+  const [mintedCount, setMintedCount] = useState(0);
+  const [isLimitsLoading, setIsLimitsLoading] = useState(false);
 
   const {
     mintAmount,
@@ -46,8 +53,38 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     hasEnoughSTT,
   } = useNFT();
 
+  // Fetch contract limits when address changes or component mounts
+  useEffect(() => {
+    async function fetchContractLimits() {
+      if (!isConnected || !address) return;
+
+      setIsLimitsLoading(true);
+      try {
+        // Get max limit from contract
+        const maxLimit = await getMaxTokensPerUser();
+        console.log(maxLimit, 'maxlimit');
+        if (maxLimit > 0) {
+          setMaxNftLimit(maxLimit);
+        }
+
+        // Get already minted count for this user
+        const minted = await getMintedTokensCount(address);
+        console.log(minted, 'mintedcount');
+        setMintedCount(minted);
+      } catch (error) {
+        console.error('Error fetching contract limits:', error);
+        // Keep using the default if there's an error
+      } finally {
+        setIsLimitsLoading(false);
+      }
+    }
+
+    fetchContractLimits();
+  }, [isConnected, address]);
+
   // Calculate the remaining NFTs the user can mint
-  const remainingMintAllowance = MAX_NFT_LIMIT - ownedNFTs.length;
+  // Use contract data if available, otherwise fallback to owned NFTs length
+  const remainingMintAllowance = maxNftLimit - (mintedCount > 0 ? mintedCount : ownedNFTs.length);
 
   // Check if user has reached their maximum limit
   const hasReachedMaxLimit = remainingMintAllowance <= 0;
@@ -90,6 +127,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     onPaymentMethodChange(value as 'native' | 'erc20');
   };
 
+  // Enhanced mint handler that refreshes limits after minting
   const handleMint = useCallback(async () => {
     try {
       if (paymentMethod === 'native') {
@@ -98,20 +136,27 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
         await mintWithERC20(mintAmount);
       }
 
+      // Reset mint amount
       if (typeof setMintAmount === 'function') {
         setMintAmount(1);
+      }
+
+      // Refresh minted count after successful mint
+      if (address) {
+        const newMintedCount = await getMintedTokensCount(address);
+        setMintedCount(newMintedCount);
       }
     } catch (error) {
       console.error('Minting failed:', error);
     }
-  }, [paymentMethod, mintNativeToken, mintAmount, mintWithERC20, setMintAmount]);
+  }, [paymentMethod, mintNativeToken, mintAmount, mintWithERC20, setMintAmount, address]);
 
   const getERC20ButtonText = () => {
     if (!isConnected) return 'Connect Wallet to Mint';
     if (isMinting) return 'Minting...';
     if (isApprovingERC20) return 'Approving IKOIN...';
     if (!hasEnoughERC20) return `Insufficient IKOIN Balance`;
-    if (hasReachedMaxLimit) return `Maximum Limit (50) Reached`;
+    if (hasReachedMaxLimit) return `Maximum Limit (${maxNftLimit}) Reached`;
     return `Mint ${mintAmount} for ${mintPrice.toFixed(4)} IKOIN`;
   };
 
@@ -128,12 +173,12 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
               {isConnected && (
                 <Link href="/gallery" className="group">
                   <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 hover:bg-white/30 transition-colors cursor-pointer">
-                    {isLoading ? (
+                    {isLoading || isLimitsLoading ? (
                       <Skeleton className="h-5 w-24 bg-white/30 rounded-full" />
                     ) : (
                       <div className="flex items-center space-x-1 h-5">
                         <span className="text-white text-xs font-medium">
-                          {ownedNFTs.length === 0 ? 'No NFTs minted' : ownedNFTs.length === 1 ? '1 NFT minted' : `${ownedNFTs.length} NFTs minted`}
+                          {ownedNFTs.length === 0 ? 'No NFTs minted' : ownedNFTs.length === 1 ? '1 NFT minted' : `${ownedNFTs.length} / ${maxNftLimit} NFTs minted`}
                         </span>
                         <ArrowRight className="h-3 w-3 ml-1 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
                       </div>
@@ -325,7 +370,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                         !hasEnoughSTT ? (
                           <span className="truncate">Insufficient STT Balance</span>
                         ) : hasReachedMaxLimit ? (
-                          <span className="truncate">Maximum Limit (50) Reached</span>
+                          <span className="truncate">Maximum Limit ({maxNftLimit}) Reached</span>
                         ) : (
                           <span className="truncate">{`Mint ${mintAmount} for ${mintPrice.toFixed(4)} STT`}</span>
                         )

@@ -9,12 +9,10 @@ export function useMintControls() {
   const [mintAmount, setMintAmount] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<'native' | 'erc20'>('native');
 
-  // Calculate mint price
   const mintPrice = useMemo(() => {
     return 0.1111 * mintAmount;
   }, [mintAmount]);
 
-  // Format balances
   const formattedERC20Balance = useMemo(() => {
     return Number(formatEther(erc20Balance)).toFixed(4);
   }, [erc20Balance]);
@@ -23,7 +21,6 @@ export function useMintControls() {
     return Number(formatEther(sttBalance)).toFixed(4);
   }, [sttBalance]);
 
-  // Check if user has enough tokens
   const hasEnoughERC20 = useMemo(() => {
     const requiredAmount = 0.1111 * mintAmount;
     return Number(formatEther(erc20Balance)) >= requiredAmount;
@@ -34,7 +31,6 @@ export function useMintControls() {
     return Number(formatEther(sttBalance)) >= requiredAmount;
   }, [sttBalance, mintAmount]);
 
-  // Increment and decrement handlers
   const handleIncrementMint = useCallback(() => {
     setMintAmount((prev) => prev + 1);
   }, []);
@@ -43,7 +39,6 @@ export function useMintControls() {
     setMintAmount((prev) => Math.max(1, prev - 1));
   }, []);
 
-  // Toggle payment method
   const togglePaymentMethod = useCallback(() => {
     setPaymentMethod((prev) => (prev === 'native' ? 'erc20' : 'native'));
   }, []);

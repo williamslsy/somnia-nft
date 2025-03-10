@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getNFTMetadata, getTokenBaseURI, NFTMetadata } from '@/lib/metadata';
+import { getNFTMetadata, getTokenBaseURI, getBatchNFTMetadata, NFTMetadata } from '@/services/getNFTMetadata';
+import { cleanupExpiredCache } from '@/lib/nftMetadataCache';
 
 export function useNFTMetadata() {
   const [nftMetadata, setNFTMetadata] = useState<Record<string, NFTMetadata>>({});
@@ -8,12 +9,15 @@ export function useNFTMetadata() {
   const [error, setError] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(true);
 
-  // Use ref for showcase metadata to prevent unnecessary re-renders
   const showcaseMetadataRef = useRef<NFTMetadata | null>(null);
-  // Add a ref to track when the showcase metadata has been updated
   const showcaseUpdatedRef = useRef<number>(0);
 
-  // Fetch base URI - only needs to run once
+  const [isBatchLoading, setIsBatchLoading] = useState(false);
+
+  useEffect(() => {
+    cleanupExpiredCache();
+  }, []);
+
   const fetchBaseURI = useCallback(async () => {
     try {
       const uri = await getTokenBaseURI();
@@ -24,13 +28,11 @@ export function useNFTMetadata() {
     }
   }, []);
 
-  // Fetch metadata for a specific token with optional force refresh flag
   const fetchTokenMetadata = useCallback(async (tokenId: number, forceShowcaseUpdate = false) => {
     try {
       const metadata = await getNFTMetadata(tokenId);
 
       setNFTMetadata((prev) => {
-        // Only update if metadata has changed or doesn't exist
         if (!prev[tokenId] || JSON.stringify(prev[tokenId]) !== JSON.stringify(metadata)) {
           return {
             ...prev,
@@ -40,10 +42,8 @@ export function useNFTMetadata() {
         return prev;
       });
 
-      // Update showcase if requested or if this is the current showcase NFT
       if (forceShowcaseUpdate) {
         showcaseMetadataRef.current = metadata;
-        // Increment the update counter to trigger a re-render in useNFT
         showcaseUpdatedRef.current += 1;
       }
 
@@ -54,7 +54,31 @@ export function useNFTMetadata() {
     }
   }, []);
 
-  // Set the showcase metadata for a specific token ID
+  const fetchBatchMetadata = useCallback(async (tokenIds: number[]) => {
+    if (!tokenIds.length) return;
+
+    setIsBatchLoading(true);
+
+    try {
+      const batchResults = await getBatchNFTMetadata(tokenIds);
+
+      setNFTMetadata((prev) => {
+        const newMetadata = { ...prev };
+
+        Object.entries(batchResults).forEach(([id, metadata]) => {
+          const tokenId = id;
+          newMetadata[tokenId] = metadata;
+        });
+
+        return newMetadata;
+      });
+    } catch (error) {
+      console.error('Error fetching batch metadata:', error);
+    } finally {
+      setIsBatchLoading(false);
+    }
+  }, []);
+
   const setShowcaseMetadata = useCallback(
     (tokenId: number) => {
       if (nftMetadata[tokenId]) {
@@ -67,19 +91,15 @@ export function useNFTMetadata() {
     [nftMetadata]
   );
 
-  // Get showcase metadata without causing re-renders
   const getShowcaseMetadata = useCallback(
     (nextNftId?: number) => {
-      // If we have metadata for the next NFT, use it
       if (nextNftId !== undefined && nftMetadata[nextNftId]) {
-        // Only update the ref if it's different
         if (JSON.stringify(showcaseMetadataRef.current) !== JSON.stringify(nftMetadata[nextNftId])) {
           showcaseMetadataRef.current = nftMetadata[nextNftId];
           showcaseUpdatedRef.current += 1;
         }
       }
 
-      // If we don't have a showcase metadata yet, use a default
       if (!showcaseMetadataRef.current) {
         showcaseMetadataRef.current = {
           name: 'Somnia NFT',
@@ -93,12 +113,17 @@ export function useNFTMetadata() {
     [nftMetadata]
   );
 
-  // Initialize showcase metadata
+  const refreshTokenMetadata = useCallback(
+    async (tokenId: number) => {
+      return fetchTokenMetadata(tokenId, true);
+    },
+    [fetchTokenMetadata]
+  );
+
   useEffect(() => {
     const loadShowcaseImage = async () => {
       setIsImageLoading(true);
       try {
-        // Initialize default showcase metadata if needed
         if (!showcaseMetadataRef.current) {
           showcaseMetadataRef.current = {
             name: 'Somnia NFT',
@@ -115,16 +140,19 @@ export function useNFTMetadata() {
 
     loadShowcaseImage();
     fetchBaseURI();
-  }, [fetchBaseURI]); // Empty dependency array means this runs once on mount
+  }, [fetchBaseURI]);
 
   return {
     nftMetadata,
     baseURI,
     error,
     isImageLoading,
+    isBatchLoading,
     fetchTokenMetadata,
+    fetchBatchMetadata,
+    refreshTokenMetadata,
     setShowcaseMetadata,
     getShowcaseMetadata,
-    showcaseUpdateCount: showcaseUpdatedRef.current, // Expose update count to trigger re-renders
+    showcaseUpdateCount: showcaseUpdatedRef.current,
   };
 }

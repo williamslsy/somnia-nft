@@ -102,10 +102,10 @@ a {
   }
 
   .btn-with-arrow {
-    @apply group;
+    @apply inline-flex items-center;
   }
 
   .btn-with-arrow svg {
-    @apply group-hover:translate-x-1 transition-transform;
+    @apply hover:translate-x-1 transition-transform;
   }
 }

@@ -32,7 +32,22 @@ const NFT_PRICE = '0.1111' as const;
 
 export const NFTContext = createContext<NFTContextType | undefined>(undefined);
 
+export const useNFTContext = () => {
+  const context = useContext(NFTContext);
+  if (context === undefined) {
+    throw new Error('useNFTContext must be used within an NFTProvider');
+  }
+  return context;
+};
+
 export const NFTProvider = ({ children }: { children: ReactNode }) => {
+  const { address } = useAccount();
+  const { data: hash, error, isPending, writeContract } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+    query: { enabled: !!hash },
+  });
+
   const [isMinting, setIsMinting] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [successCallback, setSuccessCallback] = useState<(() => void) | null>(null);
@@ -42,18 +57,60 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
   const [isApprovingERC20, setIsApprovingERC20] = useState(false);
   const [isAwaitingApproval, setIsAwaitingApproval] = useState(false);
   const [pendingMintAmount, setPendingMintAmount] = useState<number | null>(null);
+
   const [sttBalance, setSTTBalance] = useState<bigint>(BigInt(0));
 
-  const { address } = useAccount();
+  const handleContractError = useCallback((error: unknown, title: string) => {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    toast({
+      title,
+      description: `${message}`,
+      variant: 'destructive',
+    });
+  }, []);
 
-  const { data: hash, error, isPending, writeContract } = useWriteContract();
+  type ContractConfig = typeof contractConfig;
+  type ContractFunctionName = 'mintNative' | 'mintWithERC20' | 'tokensOf';
+  type ContractOptions = {
+    value?: bigint;
+    gas?: bigint;
+  };
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-    query: {
-      enabled: !!hash,
+  const estimateAndWriteContract = useCallback(
+    async (contractArgs: ContractConfig, functionName: ContractFunctionName, args: unknown[], options: ContractOptions = {}) => {
+      if (!address) throw new Error('Wallet not connected');
+
+      try {
+        const estimatedGas = await publicClient.estimateContractGas({
+          ...contractArgs,
+          functionName,
+          args,
+          account: address,
+          ...options,
+        });
+
+        const gasLimit = (estimatedGas * BigInt(130)) / BigInt(100);
+
+        writeContract({
+          ...contractArgs,
+          functionName,
+          args,
+          gas: gasLimit,
+          ...options,
+        });
+      } catch (estimationError) {
+        console.warn('Gas estimation failed, using fallback gas limit:', estimationError);
+        writeContract({
+          ...contractArgs,
+          functionName,
+          args,
+          gas: BigInt(100000),
+          ...options,
+        });
+      }
     },
-  });
+    [address, writeContract]
+  );
 
   const registerSuccessCallback = useCallback((callback: () => void) => {
     setSuccessCallback(() => callback);
@@ -110,10 +167,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Get the balance using the native balanceOf method
-      const balance = await publicClient.getBalance({
-        address,
-      });
+      const balance = await publicClient.getBalance({ address });
       console.log(balance, 'stt balance');
       setSTTBalance(balance);
     } catch (err) {
@@ -122,7 +176,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [address]);
 
-  // Private function to get the current balance (without updating state)
   const getCurrentERC20Balance = useCallback(async (): Promise<bigint> => {
     if (!address) return BigInt(0);
 
@@ -139,9 +192,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
   }, [address]);
 
   const approveERC20 = useCallback(async () => {
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
+    if (!address) throw new Error('Wallet not connected');
 
     try {
       setIsApprovingERC20(true);
@@ -163,59 +214,26 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast({
-        title: 'Error',
-        description: `Failed to approve IKOIN: ${message}`,
-        variant: 'destructive',
-      });
+      handleContractError(error, 'Error');
       setIsApprovingERC20(false);
       setIsAwaitingApproval(false);
       return false;
     }
-  }, [address, writeContract]);
+  }, [address, handleContractError, writeContract]);
 
   const executeERC20Mint = useCallback(
     async (amount: number) => {
-      if (!address) {
-        throw new Error('Wallet not connected');
-      }
+      if (!address) throw new Error('Wallet not connected');
 
       try {
         setIsMinting(true);
 
         const tokenAmount = parseInt(String(amount));
-
         if (isNaN(tokenAmount) || tokenAmount <= 0) {
           throw new Error('Invalid amount specified');
         }
 
-        try {
-          const estimatedGas = await publicClient.estimateContractGas({
-            ...contractConfig,
-            functionName: 'mintNative',
-            args: [tokenAmount],
-            account: address,
-          });
-
-          const gasLimit = (estimatedGas * BigInt(130)) / BigInt(100);
-
-          writeContract({
-            ...contractConfig,
-            functionName: 'mintWithERC20',
-            args: [tokenAmount],
-            gas: gasLimit,
-          });
-        } catch (estimationError) {
-          console.warn('Gas estimation failed, using fallback gas limit:', estimationError);
-
-          writeContract({
-            ...contractConfig,
-            functionName: 'mintWithERC20',
-            args: [tokenAmount],
-            gas: BigInt(100000),
-          });
-        }
+        await estimateAndWriteContract(contractConfig, 'mintWithERC20', [tokenAmount]);
 
         toast({
           title: 'Minting NFT...',
@@ -223,23 +241,16 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
           variant: 'default',
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        toast({
-          title: 'Error',
-          description: `Failed to mint with ERC20: ${message}`,
-          variant: 'destructive',
-        });
+        handleContractError(error, 'Error');
         setIsMinting(false);
       }
     },
-    [address, writeContract]
+    [address, estimateAndWriteContract, handleContractError]
   );
 
   const mintWithERC20 = useCallback(
     async (amount: number): Promise<void> => {
-      if (!address) {
-        throw new Error('Wallet not connected');
-      }
+      if (!address) throw new Error('Wallet not connected');
 
       const balance = await getCurrentERC20Balance();
       const requiredAmount = parseEther(NFT_PRICE) * BigInt(amount);
@@ -265,19 +276,9 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     [address, getCurrentERC20Balance, checkERC20Approval, approveERC20, executeERC20Mint]
   );
 
-  useEffect(() => {
-    if (address) {
-      checkERC20Approval();
-      fetchERC20Balance();
-      fetchSTTBalance();
-    }
-  }, [address, checkERC20Approval, fetchERC20Balance, fetchSTTBalance]);
-
   const getNFTsOwned = useCallback(async (userAddress: `0x${string}`) => {
     try {
-      if (!userAddress) {
-        throw new Error('User address is required');
-      }
+      if (!userAddress) throw new Error('User address is required');
 
       const result = (await publicClient.readContract({
         ...contractConfig,
@@ -295,49 +296,18 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
   const mintNativeToken = useCallback(
     async (amount: number) => {
       try {
-        if (!address) {
-          throw new Error('Wallet not connected');
-        }
+        if (!address) throw new Error('Wallet not connected');
 
         setIsMinting(true);
 
         const tokenAmount = parseInt(String(amount));
-
         if (isNaN(tokenAmount) || tokenAmount <= 0) {
           throw new Error('Invalid amount specified');
         }
 
         const valueToSend = parseEther(NFT_PRICE) * BigInt(tokenAmount);
 
-        try {
-          const estimatedGas = await publicClient.estimateContractGas({
-            ...contractConfig,
-            functionName: 'mintNative',
-            args: [tokenAmount],
-            value: valueToSend,
-            account: address,
-          });
-
-          const gasLimit = (estimatedGas * BigInt(130)) / BigInt(100);
-
-          writeContract({
-            ...contractConfig,
-            functionName: 'mintNative',
-            args: [tokenAmount],
-            value: valueToSend,
-            gas: gasLimit,
-          });
-        } catch (estimationError) {
-          console.warn('Gas estimation failed, using fallback gas limit:', estimationError);
-
-          writeContract({
-            ...contractConfig,
-            functionName: 'mintNative',
-            args: [tokenAmount],
-            value: valueToSend,
-            gas: BigInt(100000),
-          });
-        }
+        await estimateAndWriteContract(contractConfig, 'mintNative', [tokenAmount], { value: valueToSend });
 
         toast({
           title: 'Minting NFT...',
@@ -345,17 +315,21 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
           variant: 'default',
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        toast({
-          title: 'Error',
-          description: `Failed to mint NFT: ${message}`,
-          variant: 'destructive',
-        });
+        handleContractError(error, 'Error');
         setIsMinting(false);
       }
     },
-    [address, writeContract]
+    [address, estimateAndWriteContract, handleContractError]
   );
+
+  useEffect(() => {
+    if (address) {
+      checkERC20Approval();
+      fetchERC20Balance();
+      fetchSTTBalance();
+    }
+  }, [address, checkERC20Approval, fetchERC20Balance, fetchSTTBalance]);
+
   useEffect(() => {
     if (error) {
       if (error.message?.includes('rejected') || error.message?.includes('denied') || error.message?.includes('cancelled')) {
@@ -377,6 +351,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
       setIsAwaitingApproval(false);
       setPendingMintAmount(null);
     }
+
     if (hash) {
       toast({
         title: 'Transaction Submitted',
@@ -440,7 +415,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     getNFTsOwned,
     registerSuccessCallback,
     unregisterSuccessCallback,
-
     hasERC20Approval,
     erc20Balance,
     fetchERC20Balance,
@@ -451,12 +425,4 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return <NFTContext.Provider value={contextValue}>{children}</NFTContext.Provider>;
-};
-
-export const useNFTContext = () => {
-  const context = useContext(NFTContext);
-  if (context === undefined) {
-    throw new Error('useNFTContext must be used within an NFTProvider');
-  }
-  return context;
 };

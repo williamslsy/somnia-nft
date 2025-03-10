@@ -103,7 +103,7 @@ export const PaymentMethodTabs = ({
             <h3 className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Mint with IKOIN ERC20 tokens</h3>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className={`font-medium text-sm ${hasERC20Approval ? 'text-green-500' : 'text-amber-500'} cursor-help`}>{hasERC20Approval ? 'Approved ✓' : 'Approve ⚠️'}</span>
+                <span className={`font-medium text-xs ${hasERC20Approval ? 'text-green-500' : 'text-amber-500'} cursor-help`}>{hasERC20Approval ? 'Approved ✓' : 'Approve ⚠️'}</span>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
                 {hasERC20Approval

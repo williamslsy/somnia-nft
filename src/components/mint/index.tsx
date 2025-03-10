@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { useNFT } from '@/hooks/useNFT';
 import { useNFTContext } from '@/contexts/NFTProvider';
@@ -26,20 +26,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
   const { isMinting, isApprovingERC20, hasERC20Approval } = useNFTContext();
   const [isERC20Minting, setIsERC20Minting] = useState(false);
 
-  const {
-    mintNativeToken,
-    mintWithERC20,
-    mintPrice,
-    ownedNFTs,
-    isLoading,
-    isImageLoading,
-    showcaseMetadata,
-    erc20Balance,
-    hasEnoughERC20,
-    sttBalance,
-    hasEnoughSTT,
-    setMintAmount: setNFTMintAmount,
-  } = useNFT();
+  const { mintNativeToken, mintWithERC20, mintPrice, ownedNFTs, isLoading, isImageLoading, showcaseMetadata, erc20Balance, sttBalance, setMintAmount: setNFTMintAmount } = useNFT();
 
   const { maxNftLimit, remainingMintAllowance, hasReachedMaxLimit, isLimitsLoading, refreshMintedCount } = useMintLimits({
     isConnected,
@@ -57,6 +44,18 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     },
   });
 
+  const calculatedMintPrice = 0.1111 * mintAmount;
+
+  const currentHasEnoughSTT = useMemo(() => {
+    const requiredAmount = calculatedMintPrice;
+    return Number(sttBalance) >= requiredAmount;
+  }, [sttBalance, calculatedMintPrice]);
+
+  const currentHasEnoughERC20 = useMemo(() => {
+    const requiredAmount = calculatedMintPrice;
+    return Number(erc20Balance) >= requiredAmount;
+  }, [erc20Balance, calculatedMintPrice]);
+
   useEffect(() => {
     if (isERC20Minting) {
       setIsERC20Minting(false);
@@ -71,10 +70,10 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
     if (!isConnected) return 'Connect Wallet to Mint';
     if (isMinting) return 'Minting...';
     if (isApprovingERC20) return 'Approving IKOIN...';
-    if (!hasEnoughERC20) return `Insufficient IKOIN Balance`;
+    if (!currentHasEnoughERC20) return `Insufficient IKOIN Balance`;
     if (hasReachedMaxLimit) return `Maximum Limit (${maxNftLimit}) Reached`;
-    return `Mint ${mintAmount} for ${mintPrice.toFixed(4)} IKOIN`;
-  }, [isConnected, isMinting, isApprovingERC20, hasEnoughERC20, hasReachedMaxLimit, maxNftLimit, mintAmount, mintPrice]);
+    return `Mint ${mintAmount} for ${calculatedMintPrice.toFixed(4)} IKOIN`;
+  }, [isConnected, isMinting, isApprovingERC20, currentHasEnoughERC20, hasReachedMaxLimit, maxNftLimit, mintAmount, calculatedMintPrice]);
 
   const handleMint = useCallback(async () => {
     try {
@@ -125,9 +124,9 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                 isConnected={isConnected}
                 mintPrice={mintPrice}
                 sttBalance={sttBalance}
-                hasEnoughSTT={hasEnoughSTT}
+                hasEnoughSTT={currentHasEnoughSTT}
                 erc20Balance={erc20Balance}
-                hasEnoughERC20={hasEnoughERC20}
+                hasEnoughERC20={currentHasEnoughERC20}
                 hasERC20Approval={hasERC20Approval}
                 isApprovingERC20={isApprovingERC20}
                 isMinting={isMinting}
@@ -146,10 +145,10 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                   onIncrement={handleIncrementWithLimit}
                   onDecrement={handleDecrementMint}
                   onMint={handleMint}
-                  hasEnoughTokens={paymentMethod === 'native' ? hasEnoughSTT : hasEnoughERC20}
+                  hasEnoughTokens={paymentMethod === 'native' ? currentHasEnoughSTT : currentHasEnoughERC20}
                   paymentMethod={paymentMethod}
                   maxNftLimit={maxNftLimit}
-                  mintPrice={mintPrice}
+                  mintPrice={calculatedMintPrice}
                   getERC20ButtonText={getERC20ButtonText}
                 />
 

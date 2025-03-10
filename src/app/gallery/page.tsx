@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import NFTGallery from '@/components/nft/nft-gallery';
+import NFTGallery from '@/components/gallery';
 
 export default function GalleryPage() {
   return (

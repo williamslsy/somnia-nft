@@ -1,6 +1,6 @@
 'use client';
 
-import { Logo } from '@/components/ui/logo';
+import { Logo } from '@/components/logo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCountdown } from '@/hooks/useCountdown';

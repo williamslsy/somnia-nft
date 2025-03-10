@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import MintSection from '@/components/nft/mint-section';
+import MintSection from '@/components/mint/mint-section';
 
 export default function MintPage() {
   const [paymentMethod, setPaymentMethod] = useState<'native' | 'erc20'>('native');

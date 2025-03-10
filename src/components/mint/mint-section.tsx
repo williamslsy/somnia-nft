@@ -1,17 +1,18 @@
 'use client';
-import Image from 'next/image';
+
 import React, { useCallback, useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useNFT } from '@/hooks/useNFT';
-import { PlusCircle, Loader2, Minus, Plus, Info, ExternalLink } from 'lucide-react';
+import { PlusCircle, Loader2, Minus, Plus, Info, ExternalLink, ArrowRight } from 'lucide-react';
 import { useNFTContext } from '@/contexts/NFTProvider';
 import { ERC20MinterDialog } from './erc20-minter-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { Logo } from '../ui/logo';
+import { Logo } from '../logo';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import NFTShowcase from './nft-showcase';
 
 interface MintSectionProps {
   paymentMethod: 'native' | 'erc20';
@@ -130,11 +131,11 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
                     {isLoading ? (
                       <Skeleton className="h-5 w-24 bg-white/30 rounded-full" />
                     ) : (
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-1 h-5">
                         <span className="text-white text-xs font-medium">
                           {ownedNFTs.length === 0 ? 'No NFTs minted' : ownedNFTs.length === 1 ? '1 NFT minted' : `${ownedNFTs.length} NFTs minted`}
                         </span>
-                        <ExternalLink className="h-3 w-3 ml-1 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight className="h-3 w-3 ml-1 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
                       </div>
                     )}
                   </div>
@@ -145,23 +146,7 @@ function MintSection({ paymentMethod, onPaymentMethodChange }: MintSectionProps)
 
           <div className="flex flex-col lg:flex-row">
             <div className="hidden md:block w-full lg:w-5/12 p-6 md:p-8">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-primary/5 relative flex items-center justify-center group shadow-lg">
-                {isImageLoading ? (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-4/5 h-4/5 rounded-lg bg-muted/50 animate-pulse"></div>
-                  </div>
-                ) : (
-                  <div className="w-4/5 h-4/5 rounded-lg overflow-hidden transition duration-300 group-hover:scale-105">
-                    <Image src={showcaseMetadata.image} alt={showcaseMetadata.name || 'Somnia Mascot Pixel Art'} className="w-full h-full object-contain" width={400} height={400} priority />
-                  </div>
-                )}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition duration-300"></div>
-
-                <div className="absolute top-3 left-3 bg-background rounded-full px-3 py-1 shadow-md">
-                  <span className="text-primary text-xs font-bold">Limited Edition</span>
-                </div>
-              </div>
+              <NFTShowcase showcaseMetadata={showcaseMetadata} isLoading={isImageLoading} />
             </div>
 
             <div className="w-full lg:w-7/12 p-5 md:p-8">

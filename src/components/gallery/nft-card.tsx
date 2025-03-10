@@ -4,8 +4,9 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Loader2, Eye, Share2, Heart } from 'lucide-react';
 import { NFTMetadata } from '@/lib/metadata';
-import { Logo } from '../ui/logo';
+
 import { Button } from '../ui/button';
+import { Logo } from '../logo';
 
 interface NFTCardProps {
   tokenId?: bigint;
@@ -27,12 +28,12 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
 
   // Get rarity label and color based on token ID or other properties
   const getRarityInfo = () => {
-    if (!tokenId) return { label: 'Limited Edition', colorClass: 'bg-blue-500/10 text-blue-500' };
+    if (!tokenId) return { label: 'Limited Edition', colorClass: 'bg-blue-500/50 text-blue-500' };
 
     const id = Number(tokenId);
-    if (id < 10) return { label: 'Legendary', colorClass: 'bg-yellow-500/10 text-yellow-500' };
-    if (id < 100) return { label: 'Rare', colorClass: 'bg-purple-500/10 text-purple-500' };
-    return { label: 'Common', colorClass: 'bg-blue-500/10 text-blue-500' };
+    if (id < 10) return { label: 'Legendary', colorClass: 'bg-yellow-500/50 text-yellow-500' };
+    if (id < 100) return { label: 'Rare', colorClass: 'bg-purple-500/50 text-purple-500' };
+    return { label: 'Common', colorClass: 'bg-blue-500/50 text-blue-500' };
   };
 
   const { label: rarityLabel, colorClass: rarityColorClass } = getRarityInfo();
@@ -61,7 +62,9 @@ export function NFTCard({ tokenId, metadata, onLoad }: NFTCardProps) {
             />
 
             {/* Rarity badge */}
-            <div className={`absolute top-4 right-4 ${rarityColorClass} backdrop-blur-sm text-xs font-semibold px-3 py-1.5 rounded-full z-20`}>{rarityLabel}</div>
+            <div className={`absolute top-3 left-3 bg-background rounded-full px-3 py-1 shadow-md ${rarityColorClass} backdrop-blur-sm text-xs font-semibold px-3 py-1.5 rounded-full z-20`}>
+              {rarityLabel}
+            </div>
 
             {/* Action buttons (visible on hover) */}
             <div className="absolute inset-x-0 bottom-0 p-4 z-20 flex justify-center gap-2 transition-opacity duration-300" style={{ opacity: isHovered ? 1 : 0 }}>

@@ -79,7 +79,7 @@ export default function Home() {
                 </div>
 
                 <div className="absolute top-20 sm:top-24 md:top-32 right-4 sm:right-6 md:right-8">
-                  <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] md:w-[138px] md:h-[138px] flex items-center justify-center bg-primary/80 rounded-full text-white font-bold text-xs sm:text-sm md:text-lg text-center p-2 sm:p-3 md:p-4">
+                  <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] md:w-[138px] md:h-[138px] flex items-center justify-center bg-white/30 backdrop-blur-md rounded-full text-white font-bold text-xs sm:text-sm md:text-lg text-center p-2 sm:p-3 md:p-4">
                     Limited
                     <br />
                     Edition

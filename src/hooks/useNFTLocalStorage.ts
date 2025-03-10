@@ -13,14 +13,12 @@ export function useNFTLocalStorage({ isConnected, address, ownedNFTs }: UseNFTLo
   const [cachedNFTs, setCachedNFTs] = useState<string[]>([]);
   const [isCacheChecked, setIsCacheChecked] = useState(false);
 
-  // Initial loading of cache
   useEffect(() => {
     if (isConnected && address) {
       const addressKey = `nft_cache_${address}`;
       const cached = localStorage.getItem(addressKey);
 
       try {
-        // If we already know the user has NFTs from contract data, no need to check cache
         if (ownedNFTs.length > 0) {
           setIsCacheChecked(true);
           return;
@@ -45,7 +43,6 @@ export function useNFTLocalStorage({ isConnected, address, ownedNFTs }: UseNFTLo
     }
   }, [isConnected, address, ownedNFTs.length]);
 
-  // Update cache when NFTs change
   useEffect(() => {
     if (isConnected && address) {
       const stringIds = ownedNFTs.map((id) => id.toString());

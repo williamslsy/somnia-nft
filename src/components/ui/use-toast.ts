@@ -6,7 +6,7 @@ import * as React from 'react';
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 50; // Reduced to a very short delay
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -21,6 +21,7 @@ const actionTypes = {
   UPDATE_TOAST: 'UPDATE_TOAST',
   DISMISS_TOAST: 'DISMISS_TOAST',
   REMOVE_TOAST: 'REMOVE_TOAST',
+  CLEAR_ALL_TOASTS: 'CLEAR_ALL_TOASTS',
 } as const;
 
 let count = 0;
@@ -48,6 +49,9 @@ type Action =
   | {
       type: ActionType['REMOVE_TOAST'];
       toastId?: ToasterToast['id'];
+    }
+  | {
+      type: ActionType['CLEAR_ALL_TOASTS'];
     };
 
 interface State {
@@ -55,6 +59,11 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+const clearAllTimeouts = () => {
+  toastTimeouts.forEach((timeout) => clearTimeout(timeout));
+  toastTimeouts.clear();
+};
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -75,9 +84,11 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case 'ADD_TOAST':
+      // Clear existing toasts before adding a new one
+      clearAllTimeouts();
       return {
         ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+        toasts: [action.toast].slice(0, TOAST_LIMIT),
       };
 
     case 'UPDATE_TOAST':
@@ -89,8 +100,6 @@ export const reducer = (state: State, action: Action): State => {
     case 'DISMISS_TOAST': {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -113,6 +122,7 @@ export const reducer = (state: State, action: Action): State => {
     }
     case 'REMOVE_TOAST':
       if (action.toastId === undefined) {
+        clearAllTimeouts();
         return {
           ...state,
           toasts: [],
@@ -121,6 +131,13 @@ export const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
+      };
+
+    case 'CLEAR_ALL_TOASTS':
+      clearAllTimeouts();
+      return {
+        ...state,
+        toasts: [],
       };
   }
 };
@@ -180,10 +197,15 @@ function useToast() {
     };
   }, [state]);
 
+  const clearAllToasts = React.useCallback(() => {
+    dispatch({ type: 'CLEAR_ALL_TOASTS' });
+  }, []);
+
   return {
     ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: 'DISMISS_TOAST', toastId }),
+    clearAllToasts,
   };
 }
 

@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 const config = getDefaultConfig({
   appName: 'Somnia NFT dApp',
-  projectId: 'de422347e967b2b5de4d67738a251fc6',
+  projectId: process.env.NEXT_PUBLIC_PROJECT_ID || '',
   chains: [mainnet, somnia],
   ssr: true,
 });

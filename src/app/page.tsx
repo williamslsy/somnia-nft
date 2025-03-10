@@ -15,7 +15,9 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8 md:py-12 relative">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-8 relative">
           <div className="flex flex-col w-full lg:max-w-xl z-10 mb-12 lg:mb-0">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 leading-tight">Mint Your Exclusive Somnia Devnet NFTs</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 leading-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+              Mint Your Exclusive Somnia Devnet NFTs
+            </h1>
 
             <p className="text-base sm:text-lg text-[#565656] mb-6 md:mb-8 leading-relaxed">
               Be among the first to mint a limited edition &quot;Devnet OG Somniac&quot; NFT on Somnia. These unique pixel art collectibles symbolize your early participation and grant you a 30% boost

@@ -1,0 +1,43 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wallet body -->
+  <rect x="30" y="50" width="140" height="100" rx="12" fill="#6366F1" />
+  <rect x="30" y="50" width="140" height="100" rx="12" fill="url(#paint0_linear)" fill-opacity="0.6" />
+  
+  <!-- Wallet flap -->
+  <path d="M170 80V70C170 63.3726 164.627 58 158 58H42C35.3726 58 30 63.3726 30 70V80" stroke="white" stroke-width="4" stroke-linecap="round" />
+  
+  <!-- Card slot -->
+  <rect x="130" y="85" width="50" height="30" rx="6" fill="#4F46E5" />
+  
+  <!-- Card -->
+  <rect x="125" y="75" width="40" height="25" rx="4" fill="#F9FAFB" />
+  <rect x="130" y="82" width="20" height="3" rx="1.5" fill="#6366F1" />
+  <rect x="130" y="90" width="15" height="3" rx="1.5" fill="#6366F1" opacity="0.7" />
+  
+  <!-- Coins -->
+  <circle cx="70" cy="100" r="15" fill="#F9FAFB" />
+  <circle cx="70" cy="100" r="12" fill="#FCD34D" />
+  <path d="M70 94V106M64 100H76" stroke="#F9FAFB" stroke-width="2" stroke-linecap="round" />
+  
+  <circle cx="90" cy="110" r="15" fill="#F9FAFB" />
+  <circle cx="90" cy="110" r="12" fill="#FCD34D" />
+  <path d="M90 104V116M84 110H96" stroke="#F9FAFB" stroke-width="2" stroke-linecap="round" />
+  
+  <circle cx="60" cy="120" r="15" fill="#F9FAFB" />
+  <circle cx="60" cy="120" r="12" fill="#FCD34D" />
+  <path d="M60 114V126M54 120H66" stroke="#F9FAFB" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- Sparkles -->
+  <path d="M40 70L42 72L44 70L42 68L40 70Z" fill="white" />
+  <path d="M160 60L163 63L166 60L163 57L160 60Z" fill="white" />
+  <path d="M150 130L153 133L156 130L153 127L150 130Z" fill="white" />
+  <path d="M50 140L52 142L54 140L52 138L50 140Z" fill="white" />
+  
+  <defs>
+    <linearGradient id="paint0_linear" x1="30" y1="50" x2="170" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5" />
+      <stop offset="1" stop-color="#7C3AED" />
+    </linearGradient>
+  </defs>
+</svg>
+

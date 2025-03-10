@@ -1,0 +1,26 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Empty frame -->
+  <rect x="40" y="40" width="120" height="120" rx="8" stroke="#6366F1" stroke-width="4" stroke-dasharray="8 8" />
+  
+  <!-- Image placeholder icon -->
+  <rect x="60" y="60" width="80" height="60" rx="4" fill="#E5E7EB" />
+  <path d="M60 100L80 80L100 100L120 80L140 100V116C140 118.209 138.209 120 136 120H64C61.7909 120 60 118.209 60 116V100Z" fill="#D1D5DB" />
+  <circle cx="80" cy="70" r="6" fill="#9CA3AF" />
+  
+  <!-- Plus sign -->
+  <circle cx="100" cy="140" r="20" fill="#6366F1" fill-opacity="0.2" />
+  <path d="M100 130V150M90 140H110" stroke="#6366F1" stroke-width="4" stroke-linecap="round" />
+  
+  <!-- Decorative elements -->
+  <circle cx="40" cy="40" r="8" fill="#6366F1" fill-opacity="0.2" />
+  <circle cx="160" cy="40" r="8" fill="#6366F1" fill-opacity="0.2" />
+  <circle cx="40" cy="160" r="8" fill="#6366F1" fill-opacity="0.2" />
+  <circle cx="160" cy="160" r="8" fill="#6366F1" fill-opacity="0.2" />
+  
+  <!-- Sparkles -->
+  <path d="M30 100L34 104L38 100L34 96L30 100Z" fill="#6366F1" fill-opacity="0.6" />
+  <path d="M170 100L174 104L178 100L174 96L170 100Z" fill="#6366F1" fill-opacity="0.6" />
+  <path d="M100 30L104 34L108 30L104 26L100 30Z" fill="#6366F1" fill-opacity="0.6" />
+  <path d="M100 170L104 174L108 170L104 166L100 170Z" fill="#6366F1" fill-opacity="0.6" />
+</svg>
+

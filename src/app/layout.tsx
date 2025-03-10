@@ -5,6 +5,8 @@ import { Header } from '@/components/header';
 import WalletProvider from '@/contexts/WalletProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { NFTProvider } from '@/contexts/NFTProvider';
+import { AccountProvider } from '@/contexts/AccountProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,10 +32,14 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <WalletProvider>
-          <NFTProvider>
-            <Header />
-            {children}
-          </NFTProvider>
+          <AccountProvider>
+            <NFTProvider>
+              <TooltipProvider>
+                <Header />
+                {children}
+              </TooltipProvider>
+            </NFTProvider>
+          </AccountProvider>
         </WalletProvider>
         <Toaster />
       </body>

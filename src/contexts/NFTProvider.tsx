@@ -23,7 +23,9 @@ interface NFTContextType {
   mintWithERC20: (amount: number) => Promise<void>;
   fetchERC20Balance: () => Promise<void>;
   isApprovingERC20: boolean;
-  approveERC20: () => Promise<boolean>;
+
+  sttBalance: bigint;
+  fetchSTTBalance: () => Promise<void>;
 }
 
 const NFT_PRICE = '0.1111' as const;
@@ -40,6 +42,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
   const [isApprovingERC20, setIsApprovingERC20] = useState(false);
   const [isAwaitingApproval, setIsAwaitingApproval] = useState(false);
   const [pendingMintAmount, setPendingMintAmount] = useState<number | null>(null);
+  const [sttBalance, setSTTBalance] = useState<bigint>(BigInt(0));
 
   const { address } = useAccount();
 
@@ -100,6 +103,26 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [address]);
 
+  const fetchSTTBalance = useCallback(async (): Promise<void> => {
+    if (!address) {
+      setSTTBalance(BigInt(0));
+      return;
+    }
+
+    try {
+      // Get the balance using the native balanceOf method
+      const balance = await publicClient.getBalance({
+        address,
+      });
+      console.log(balance, 'stt balance');
+      setSTTBalance(balance);
+    } catch (err) {
+      console.error('Error fetching STT balance:', err);
+      setSTTBalance(BigInt(0));
+    }
+  }, [address]);
+
+  // Private function to get the current balance (without updating state)
   const getCurrentERC20Balance = useCallback(async (): Promise<bigint> => {
     if (!address) return BigInt(0);
 
@@ -194,14 +217,8 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
           });
         }
 
-        writeContract({
-          ...contractConfig,
-          functionName: 'mintWithERC20',
-          args: [tokenAmount],
-        });
-
         toast({
-          title: 'Minting NFT',
+          title: 'Minting NFT...',
           description: `Confirm transaction to mint ${amount} NFT(s) with IKOIN (2/2)`,
           variant: 'default',
         });
@@ -252,8 +269,9 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     if (address) {
       checkERC20Approval();
       fetchERC20Balance();
+      fetchSTTBalance();
     }
-  }, [address, checkERC20Approval, fetchERC20Balance]);
+  }, [address, checkERC20Approval, fetchERC20Balance, fetchSTTBalance]);
 
   const getNFTsOwned = useCallback(async (userAddress: `0x${string}`) => {
     try {
@@ -322,7 +340,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         }
 
         toast({
-          title: 'Confirm Transaction',
+          title: 'Minting NFT...',
           description: `Confirm to mint ${amount} NFT(s) with STT`,
           variant: 'default',
         });
@@ -340,17 +358,25 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
   );
   useEffect(() => {
     if (error) {
-      toast({
-        title: 'Error',
-        description: `Transaction failed: ${error.message || 'Unknown error'}`,
-        variant: 'destructive',
-      });
+      if (error.message?.includes('rejected') || error.message?.includes('denied') || error.message?.includes('cancelled')) {
+        toast({
+          title: 'Transaction Cancelled',
+          description: 'You rejected the transaction',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: `Transaction failed: ${error.message?.substring(0, 100) || 'Unknown error'}`,
+          variant: 'destructive',
+        });
+      }
+
       setIsMinting(false);
       setIsApprovingERC20(false);
       setIsAwaitingApproval(false);
       setPendingMintAmount(null);
     }
-
     if (hash) {
       toast({
         title: 'Transaction Submitted',
@@ -399,9 +425,10 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
         }
 
         fetchERC20Balance();
+        fetchSTTBalance();
       }
     }
-  }, [hash, isConfirming, isSuccess, error, successCallback, isAwaitingApproval, pendingMintAmount, executeERC20Mint, fetchERC20Balance]);
+  }, [hash, isConfirming, isSuccess, error, successCallback, isAwaitingApproval, pendingMintAmount, executeERC20Mint, fetchERC20Balance, fetchSTTBalance]);
 
   const contextValue: NFTContextType = {
     isPending,
@@ -415,9 +442,10 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
     hasERC20Approval,
     erc20Balance,
-    mintWithERC20,
-    approveERC20,
     fetchERC20Balance,
+    mintWithERC20,
+    sttBalance,
+    fetchSTTBalance,
     isApprovingERC20,
   };
 

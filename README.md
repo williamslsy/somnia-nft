@@ -238,6 +238,13 @@ The application prioritizes user experience in several ways:
 
 ## 🧠 Architecture Decisions
 
+### File Naming Conventions
+
+- Kebab-case (kebab-case.tsx) is used for all component file names instead of PascalCase (PascalCase.tsx)
+- This approach aligns with Next.js file-based routing conventions where pages and routes use kebab-case
+- Maintaining consistent naming patterns throughout the application improves developer experience and code navigation
+- While React components themselves use PascalCase in the code (e.g., function MintDialog()), their filenames follow the kebab-case pattern for consistency with the Next.js ecosystem
+
 ### State Management
 
 - Context API for global state (NFT data, wallet connection)

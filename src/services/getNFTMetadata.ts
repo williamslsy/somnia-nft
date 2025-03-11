@@ -1,5 +1,5 @@
 import { publicClient } from '@/constants/publicClient';
-import { contractConfig } from '../lib/config';
+import { sttContractConfig } from '../lib/config';
 import { cacheBaseURI, getCachedBaseURI, cacheNFTMetadata, getCachedNFTMetadata } from '../lib/nftMetadataCache';
 
 export interface NFTMetadata {
@@ -20,7 +20,7 @@ export async function getTokenBaseURI(): Promise<string> {
 
   try {
     const baseURI = await publicClient.readContract({
-      ...contractConfig,
+      ...sttContractConfig,
       functionName: 'baseURI',
     });
 
@@ -38,7 +38,7 @@ export async function getTokenBaseURI(): Promise<string> {
 export async function getTokenURI(tokenId: number): Promise<string> {
   try {
     const tokenURI = await publicClient.readContract({
-      ...contractConfig,
+      ...sttContractConfig,
       functionName: 'tokenURI',
       args: [BigInt(tokenId)],
     });

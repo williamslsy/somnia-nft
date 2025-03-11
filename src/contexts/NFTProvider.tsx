@@ -4,7 +4,7 @@ import React, { createContext, useState, useEffect, ReactNode, useCallback, useC
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 import { toast } from '@/components/ui/use-toast';
-import { contractConfig, erc20ContractConfig } from '@/lib/config';
+import { sttContractConfig, erc20ContractConfig } from '@/lib/config';
 import { publicClient } from '@/constants/publicClient';
 import { useAccount } from 'wagmi';
 
@@ -69,7 +69,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  type ContractConfig = typeof contractConfig;
+  type ContractConfig = typeof sttContractConfig;
   type ContractFunctionName = 'mintNative' | 'mintWithERC20' | 'tokensOf';
   type ContractOptions = {
     value?: bigint;
@@ -127,7 +127,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
       const allowance = (await publicClient.readContract({
         ...erc20ContractConfig,
         functionName: 'allowance',
-        args: [address, contractConfig.address],
+        args: [address, sttContractConfig.address],
       })) as bigint;
 
       const minimumApproval = parseEther('0.1111');
@@ -203,7 +203,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
       writeContract({
         ...erc20ContractConfig,
         functionName: 'approve',
-        args: [contractConfig.address, approvalAmount],
+        args: [sttContractConfig.address, approvalAmount],
       });
 
       toast({
@@ -233,7 +233,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
           throw new Error('Invalid amount specified');
         }
 
-        await estimateAndWriteContract(contractConfig, 'mintWithERC20', [tokenAmount]);
+        await estimateAndWriteContract(sttContractConfig, 'mintWithERC20', [tokenAmount]);
 
         toast({
           title: 'Minting NFT...',
@@ -281,7 +281,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
       if (!userAddress) throw new Error('User address is required');
 
       const result = (await publicClient.readContract({
-        ...contractConfig,
+        ...sttContractConfig,
         functionName: 'tokensOf',
         args: [userAddress],
       })) as bigint[];
@@ -307,7 +307,7 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
         const valueToSend = parseEther(NFT_PRICE) * BigInt(tokenAmount);
 
-        await estimateAndWriteContract(contractConfig, 'mintNative', [tokenAmount], { value: valueToSend });
+        await estimateAndWriteContract(sttContractConfig, 'mintNative', [tokenAmount], { value: valueToSend });
 
         toast({
           title: 'Minting NFT...',

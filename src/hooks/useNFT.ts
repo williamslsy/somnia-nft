@@ -9,7 +9,15 @@ export function useNFT() {
   const ownership = useNFTOwnership(metadata.fetchTokenMetadata);
   const mintControls = useMintControls();
 
-  const [showcaseMetadataState, setShowcaseMetadataState] = useState(metadata.getShowcaseMetadata(ownership.nextNftId));
+  const effectiveTokenId = useMemo(() => {
+    if (ownership.nextNftId !== undefined) {
+      return ownership.nextNftId;
+    }
+
+    return 0;
+  }, [ownership.nextNftId]);
+
+  const [showcaseMetadataState, setShowcaseMetadataState] = useState(metadata.getShowcaseMetadata(effectiveTokenId));
 
   useEffect(() => {
     if (ownership.nftChangedEvent) {
@@ -18,12 +26,18 @@ export function useNFT() {
   }, [ownership.nftChangedEvent, metadata]);
 
   useEffect(() => {
-    setShowcaseMetadataState(metadata.getShowcaseMetadata(ownership.nextNftId));
-  }, [metadata.showcaseUpdateCount, ownership.nextNftId, metadata]);
+    setShowcaseMetadataState(metadata.getShowcaseMetadata(effectiveTokenId));
+  }, [metadata.showcaseUpdateCount, effectiveTokenId, metadata]);
 
   useEffect(() => {
-    setShowcaseMetadataState(metadata.getShowcaseMetadata(ownership.nextNftId));
-  }, [metadata.nftMetadata, ownership.nextNftId, metadata]);
+    setShowcaseMetadataState(metadata.getShowcaseMetadata(effectiveTokenId));
+  }, [metadata.nftMetadata, effectiveTokenId, metadata]);
+
+  useEffect(() => {
+    if (ownership.ownedNFTs.length === 0) {
+      metadata.fetchTokenMetadata(0);
+    }
+  }, [ownership.ownedNFTs, metadata]);
 
   const fetchAllOwnedNFTsMetadata = useMemo(() => {
     return async () => {
@@ -49,7 +63,7 @@ export function useNFT() {
     ...mintControls,
 
     showcaseMetadata: showcaseMetadataState,
-    tokenId: ownership.nextNftId,
+    tokenId: effectiveTokenId,
     refetchOwnedNFTs: ownership.fetchOwnedNFTs,
     fetchAllOwnedNFTsMetadata,
   };

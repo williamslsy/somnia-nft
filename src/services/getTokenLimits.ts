@@ -1,12 +1,12 @@
 'use client';
 
 import { publicClient } from '@/constants/publicClient';
-import { contractConfig } from '@/lib/config';
+import { sttContractConfig } from '@/lib/config';
 
 export async function getMaxTokensPerUser(): Promise<number> {
   try {
     const maxTokens = await publicClient.readContract({
-      ...contractConfig,
+      ...sttContractConfig,
       functionName: 'MAX_TOKENS_PER_USER',
     });
 
@@ -22,7 +22,7 @@ export async function getMintedTokensCount(address: string): Promise<number> {
 
   try {
     const mintedCount = await publicClient.readContract({
-      ...contractConfig,
+      ...sttContractConfig,
       functionName: 'mintedTokensPerUser',
       args: [address],
     });

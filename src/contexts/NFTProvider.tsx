@@ -168,7 +168,6 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const balance = await publicClient.getBalance({ address });
-      console.log(balance, 'stt balance');
       setSTTBalance(balance);
     } catch (err) {
       console.error('Error fetching STT balance:', err);

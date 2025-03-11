@@ -27,11 +27,9 @@ export function useNFTLocalStorage({ isConnected, address, ownedNFTs }: UseNFTLo
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed)) {
-            console.log('Found cached NFTs:', parsed.length);
             setCachedNFTs(parsed);
           }
         } else {
-          console.log('No cached NFTs found');
           setCachedNFTs([]);
         }
       } catch (e) {
@@ -50,7 +48,6 @@ export function useNFTLocalStorage({ isConnected, address, ownedNFTs }: UseNFTLo
 
       localStorage.setItem(addressKey, JSON.stringify(stringIds));
       setCachedNFTs(stringIds);
-      console.log('Updated NFT cache with', stringIds.length, 'NFTs');
     }
   }, [ownedNFTs, isConnected, address]);
 

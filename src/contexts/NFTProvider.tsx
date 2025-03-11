@@ -382,10 +382,15 @@ export const NFTProvider = ({ children }: { children: ReactNode }) => {
 
         if (pendingMintAmount !== null) {
           setIsMinting(true);
+          const amountToMint = pendingMintAmount;
+          setPendingMintAmount(null);
+
           setTimeout(() => {
-            executeERC20Mint(pendingMintAmount);
-            setPendingMintAmount(null);
-          }, 1500);
+            executeERC20Mint(amountToMint).catch((err) => {
+              console.error('Error during delayed mint execution:', err);
+              setIsMinting(false);
+            });
+          }, 200);
         }
       } else {
         toast({

@@ -15,7 +15,7 @@ interface RarityInfo {
 
 export const useNFTRarity = (tokenId?: number): RarityInfo => {
   return useMemo(() => {
-    if (!tokenId)
+    if (tokenId === undefined || tokenId === null)
       return {
         label: 'Limited Edition',
         colorClass: 'bg-blue-500/50 text-blue-500',
@@ -25,8 +25,8 @@ export const useNFTRarity = (tokenId?: number): RarityInfo => {
 
     if (id < 10)
       return {
-        label: 'Legendary',
-        colorClass: 'bg-yellow-500/50 text-yellow-500',
+        label: 'Limited Edition',
+        colorClass: 'bg-blue-500/50 text-blue-500',
       };
 
     if (isPrime(id))
@@ -37,12 +37,12 @@ export const useNFTRarity = (tokenId?: number): RarityInfo => {
 
     if (id % 2 === 0)
       return {
-        label: 'Limited Edition',
-        colorClass: 'bg-blue-500/50 text-blue-500',
+        label: 'Legendary',
+        colorClass: 'bg-yellow-500/50 text-yellow-500',
       };
 
     return {
-      label: 'Common',
+      label: 'Exclusive',
       colorClass: 'bg-blue-500/50 text-blue-500',
     };
   }, [tokenId]);

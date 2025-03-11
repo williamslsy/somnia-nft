@@ -9,12 +9,12 @@ A feature-rich NFT minting application built on the Somnia Network, allowing use
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [Setup & Installation](#setup--installation)
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Key Components](#key-components)
 - [Technical Implementation](#technical-implementation)
 - [User Experience](#user-experience)
-- [Setup & Installation](#setup--installation)
 - [Architecture Decisions](#architecture-decisions)
 - [Performance Optimizations](#performance-optimizations)
 - [Future Improvements](#future-improvements)
@@ -31,6 +31,37 @@ This application is a full-featured NFT minting dApp built for the Somnia Networ
 - View detailed information about each NFT
 
 The app demonstrates interaction with smart contracts, transaction management, and responsive UI design.
+
+## 🚀 Setup & Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/williamslsy/somnia-nft
+   cd somnia-nft
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Create environment file**
+   Create a `.env.local` file with the following:
+
+   ```
+   NEXT_PUBLIC_PROJECT_ID=your_wallet_connect_project_id
+   ```
+
+4. **Run the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+5. **Access the application**
+   Open your browser and navigate to `http://localhost:3000`
 
 ## ✨ Features
 
@@ -204,37 +235,6 @@ The application prioritizes user experience in several ways:
 - Optimistic UI updates
 - Debounced inputs
 - Memoized components and callbacks
-
-## 🚀 Setup & Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/williamslsy/somnia-nft
-   cd somnia-nft
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Create environment file**
-   Create a `.env.local` file with the following:
-
-   ```
-   NEXT_PUBLIC_PROJECT_ID=your_wallet_connect_project_id
-   ```
-
-4. **Run the development server**
-
-   ```bash
-   npm run dev
-   ```
-
-5. **Access the application**
-   Open your browser and navigate to `http://localhost:3000`
 
 ## 🧠 Architecture Decisions
 

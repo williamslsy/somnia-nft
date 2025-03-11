@@ -172,7 +172,7 @@ The application handles NFT metadata fetching and rendering:
 
 ### Smart Contract Interaction
 
-The application uses Viem for smart contract interactions.
+The application uses Wagmi/Viem for smart contract interactions.
 
 ## 👤 User Experience
 

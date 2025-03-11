@@ -2,6 +2,10 @@
 
 A feature-rich NFT minting application built on the Somnia Network, allowing users to mint NFTs using both native tokens (STT) and ERC20 tokens (IKOIN), view their NFT collection, and interact with the Somnia blockchain.
 
+## Live Demo
+
+**Deployed Application:** [https://somnia-nft.vercel.app/](https://somnia-nft.vercel.app/)
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)

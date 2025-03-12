@@ -281,8 +281,6 @@ The application prioritizes user experience in several ways:
 
 - Integration with IPFS for decentralized metadata storage
 - Advanced filtering and sorting options in the gallery
-- Batch minting functionality
 - NFT trading capabilities
 - Social sharing features
-- Multi-chain support
 - Enhanced analytics on NFT ownership
